@@ -8179,14 +8179,14 @@ How to play:
           rawLines.forEach((lineStr, lineIdx) => {
             const rowDiv = document.createElement("div");
             rowDiv.style.display = "flex";
-            rowDiv.style.alignItems = "center";
+            rowDiv.style.alignItems = "baseline";
             rowDiv.style.justifyContent = "flex-start";
-            rowDiv.style.gap = `${Math.round(fontSize * 0.26)}px`;
+            rowDiv.style.gap = `${Math.round(fontSize * 0.28)}px`;
             rowDiv.style.fontSize = `${fontSize}px`;
             rowDiv.style.fontWeight = "800";
             rowDiv.style.color = "#14110F";
             rowDiv.style.letterSpacing = "-0.02em";
-            rowDiv.style.lineHeight = "1.25";
+            rowDiv.style.lineHeight = "1.35";
             rowDiv.style.whiteSpace = "nowrap";
 
             const tokens = parseLineTokens(lineStr);
@@ -8196,7 +8196,7 @@ How to play:
               tokenWrap.title = "Click to cycle: Gold Underline → Red Pill → Plain";
               tokenWrap.onclick = () => cycleWordStyle(lineIdx, tokenIdx);
               tokenWrap.style.display = "inline-flex";
-              tokenWrap.style.alignItems = "center";
+              tokenWrap.style.alignItems = "baseline";
               tokenWrap.style.position = "relative";
 
               if (tk.prefix) {
@@ -8210,21 +8210,20 @@ How to play:
                 pill.textContent = tk.text;
                 pill.style.backgroundColor = "#C84326";
                 pill.style.color = "#FAF6F0";
-                pill.style.height = `${Math.round(fontSize * 1.32)}px`;
-                pill.style.padding = "0 22px";
+                pill.style.display = "inline-block";
+                pill.style.verticalAlign = "baseline";
+                pill.style.padding = `${Math.max(4, Math.round(fontSize * 0.10))}px ${Math.round(fontSize * 0.44)}px ${Math.max(6, Math.round(fontSize * 0.16))}px`;
                 pill.style.borderRadius = "999px";
-                pill.style.display = "inline-flex";
-                pill.style.alignItems = "center";
-                pill.style.justifyContent = "center";
-                pill.style.lineHeight = "1";
+                pill.style.lineHeight = "1.15";
                 pill.style.boxSizing = "border-box";
+                pill.style.whiteSpace = "nowrap";
+                pill.style.position = "relative";
+                pill.style.top = `${Math.round(fontSize * 0.03)}px`;
                 tokenWrap.appendChild(pill);
               } else if (tk.type === "underline") {
                 const under = document.createElement("span");
                 under.style.display = "inline-block";
                 under.style.position = "relative";
-                under.style.paddingBottom = "14px";
-                under.style.marginBottom = "-14px";
 
                 const textSpan = document.createElement("span");
                 textSpan.textContent = tk.text;
@@ -8232,18 +8231,20 @@ How to play:
 
                 const bar = document.createElement("span");
                 bar.style.position = "absolute";
-                bar.style.bottom = "0";
+                bar.style.bottom = "-5px";
                 bar.style.left = "0";
                 bar.style.width = "100%";
-                bar.style.height = "8px";
+                bar.style.height = "7px";
                 bar.style.backgroundColor = "#D99B26";
                 bar.style.borderRadius = "4px";
+                bar.style.pointerEvents = "none";
                 under.appendChild(bar);
 
                 tokenWrap.appendChild(under);
               } else {
                 const normal = document.createElement("span");
                 normal.textContent = tk.text;
+                normal.style.display = "inline-block";
                 tokenWrap.appendChild(normal);
               }
 
