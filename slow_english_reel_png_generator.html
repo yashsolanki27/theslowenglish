@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slow English Vault — 1-Click Reel PNG Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas for crisp 1080x1920 DOM-to-PNG rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- JSZip for 1-click batch ZIP export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #12100E;
+            color: #F6F2EA;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #181512;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3A332C;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #C84326;
+        }
+
+        /* Interactive word hover effect in Live Preview */
+        .interactive-word {
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.1s ease;
+            user-select: none;
+        }
+        .interactive-word:hover {
+            filter: brightness(0.92);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row overflow-x-hidden">
+
+    <!-- LEFT SIDEBAR: REUSABLE STUDIO CONTROLS -->
+    <div class="w-full lg:w-[500px] xl:w-[560px] bg-[#1A1714] border-b lg:border-b-0 lg:border-r border-[#2E2924] flex flex-col h-auto lg:h-screen lg:overflow-y-auto shrink-0 z-20">
+        
+        <!-- Sticky Top Header -->
+        <div class="p-4 sm:p-5 border-b border-[#2E2924] flex items-center justify-between bg-[#141210] sticky top-0 z-30">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-[#C84326] flex items-center justify-center font-black text-white text-base shadow-inner">
+                    SE
+                </div>
+                <div>
+                    <h1 class="font-bold text-base text-[#F6F2EA] tracking-tight leading-none">Slow English Reel PNG Studio</h1>
+                    <p class="text-xs text-[#A39B8F] mt-1">Cleaned Layout • Click Any Word on Preview to Style</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="px-2.5 py-1 text-[11px] font-semibold text-[#D5CFC4] hover:text-white bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg transition flex items-center gap-1" title="Go to Vault Dashboard">
+                    <span>←</span>
+                    <span>Vault</span>
+                </a>
+                <span class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#28231E] text-[#DCA03A] rounded-full border border-[#3A332C]">
+                    1080×1920
+                </span>
+            </div>
+        </div>
+
+        <div class="p-4 sm:p-5 space-y-5 flex-1">
+
+            <!-- Primary Export Actions -->
+            <div class="bg-[#231F1B] p-4 rounded-2xl border border-[#3A332C] shadow-lg space-y-2.5">
+                <button id="downloadBtnTop" onclick="downloadHighResPNG()" class="w-full py-3.5 px-5 bg-[#C84326] hover:bg-[#b0381e] active:scale-[0.99] transition-all text-white font-extrabold text-base rounded-xl shadow-lg flex items-center justify-center gap-2.5 cursor-pointer">
+                    <span>📸</span>
+                    <span>Download 1080×1920 Reel PNG</span>
+                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadBlankTemplatePNG()" class="py-2 px-3 bg-[#181512] hover:bg-[#28231E] text-[#D5CFC4] border border-[#3A332C] rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer" title="Download card without script text for Canva/CapCut">
+                        <span>🖼️</span>
+                        <span>Blank Template PNG</span>
+                    </button>
+                    <button onclick="copyCaptionText()" class="py-2 px-3 bg-[#181512] hover:bg-[#28231E] text-[#D5CFC4] border border-[#3A332C] rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer">
+                        <span>📋</span>
+                        <span>Copy Clean Caption</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 1. Script Preset & Batch Navigation -->
+            <div class="bg-[#141210] border border-[#2E2924] rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold uppercase tracking-wider text-[#DCA03A]">
+                        1. Select Script or Navigate Queue
+                    </label>
+                    <span id="queueCounter" class="text-xs font-mono text-[#A39B8F]">Script 1 of 8</span>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="prevScript()" class="px-3 py-2 bg-[#231F1B] hover:bg-[#2E2924] text-[#F6F2EA] border border-[#3A332C] rounded-xl text-xs font-bold transition cursor-pointer">
+                        ← Prev
+                    </button>
+                    <select id="presetSelect" onchange="loadPreset(parseInt(this.value, 10))" class="flex-1 bg-[#1A1714] border border-[#3A332C] rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F6F2EA] focus:outline-none focus:border-[#C84326]">
+                    </select>
+                    <button onclick="nextScript()" class="px-3 py-2 bg-[#231F1B] hover:bg-[#2E2924] text-[#F6F2EA] border border-[#3A332C] rounded-xl text-xs font-bold transition cursor-pointer">
+                        Next →
+                    </button>
+                </div>
+
+                <!-- Category Quick-Templates (S/SH, V/W, TH/S, L/R) -->
+                <div class="pt-1">
+                    <span class="block text-[11px] text-[#A39B8F] mb-1.5">Switch Phonetic Category Preset:</span>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button onclick="applyCategoryPreset('S_SH')" class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer">S vs. SH</button>
+                        <button onclick="applyCategoryPreset('V_W')" class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer">V vs. W</button>
+                        <button onclick="applyCategoryPreset('TH_S')" class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer">TH vs. S</button>
+                        <button onclick="applyCategoryPreset('L_R')" class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer">L vs. R</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 5-Line Script Editor -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between flex-wrap gap-1">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-[#DCA03A]">
+                        2. 5-Line Tongue Twister Script
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="autoHighlightScript()" class="px-2.5 py-1 bg-[#2B251F] hover:bg-[#3A322A] text-[#DCA03A] border border-[#4D4236] rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer" title="Automatically wrap target sounds in [red pills] and {gold underlines}">
+                            ⚡ Auto-Highlight Sounds
+                        </button>
+                        <button onclick="stripHighlights()" class="px-2 py-1 bg-[#231F1B] hover:bg-[#2E2924] text-[#A39B8F] border border-[#3A332C] rounded-lg text-xs transition cursor-pointer">
+                            Clear Tags
+                        </button>
+                    </div>
+                </div>
+
+                <textarea id="scriptInput" rows="5" oninput="renderCard()" class="w-full bg-[#12100E] border border-[#3A332C] rounded-xl p-3.5 text-sm font-mono text-[#F6F2EA] leading-relaxed focus:outline-none focus:border-[#C84326]" placeholder="Enter 5 lines (1 per line)..."></textarea>
+
+                <!-- Syntax & Interactive Click Helper -->
+                <div class="grid grid-cols-2 gap-2 pt-0.5">
+                    <div class="bg-[#141210] border border-[#2E2924] rounded-lg p-2 flex items-center gap-2">
+                        <span class="px-2 py-0.5 bg-[#C84326] text-white font-bold text-xs rounded-full">[word]</span>
+                        <span class="text-xs text-[#A39B8F]">= Red Pill</span>
+                    </div>
+                    <div class="bg-[#141210] border border-[#2E2924] rounded-lg p-2 flex items-center gap-2">
+                        <span class="px-1 font-bold text-xs text-[#F6F2EA] border-b-[3px] border-[#D99B26]">{word}</span>
+                        <span class="text-xs text-[#A39B8F]">= Gold Underline</span>
+                    </div>
+                </div>
+                <p class="text-[11px] text-[#A39B8F]">
+                    💡 <strong class="text-[#F6F2EA]">Pro Tip:</strong> Click any word directly on the live card preview on the right to cycle between <span class="underline decoration-[#D99B26] decoration-2">Gold Underline</span> → <span class="px-1.5 py-0.2 bg-[#C84326] text-white rounded-full text-[10px]">Red Pill</span> → Plain!
+                </p>
+            </div>
+
+            <!-- 3. Top Header & Hook Controls -->
+            <div class="bg-[#141210] border border-[#2E2924] rounded-2xl p-4 space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-[#A39B8F]">
+                    3. Top Header &amp; Red Hook Box
+                </h3>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-[11px] text-[#A39B8F] mb-1">Center White Pill</label>
+                        <input id="workoutBadgeInput" type="text" value="DAILY VOCAL WORKOUT" oninput="renderCard()" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA] font-semibold focus:outline-none focus:border-[#C84326]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-[#A39B8F] mb-1">Right Outlined Pill</label>
+                        <input id="categoryInput" type="text" value="CATEGORY 01 • S vs. SH" oninput="renderCard()" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA] font-semibold focus:outline-none focus:border-[#C84326]">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] text-[#A39B8F] mb-1">Red Hook Box (2 Lines)</label>
+                    <textarea id="hookInput" rows="2" oninput="renderCard()" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-xl p-2.5 text-xs sm:text-sm text-[#F6F2EA] focus:outline-none focus:border-[#C84326]">Do you speak English fluently?
+Then try this without pausing:</textarea>
+                </div>
+            </div>
+
+            <!-- 4. Two-Column Phonetic Tip Box Controls -->
+            <div class="bg-[#141210] border border-[#2E2924] rounded-2xl p-4 space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-[#A39B8F]">
+                    4. Two-Column Phonetic Tip Box &amp; Footer
+                </h3>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] text-[#DCA03A] font-semibold mb-1">Left Gold Badge &amp; Tip</label>
+                        <div class="flex gap-1.5 mb-1.5">
+                            <input id="leftBadgeInput" type="text" value="S" oninput="renderCard()" class="w-12 bg-[#1A1714] border border-[#3A332C] rounded-lg px-2 py-1 text-xs font-bold text-center text-[#F6F2EA]">
+                            <span class="text-[11px] text-[#A39B8F] self-center">Target 1</span>
+                        </div>
+                        <textarea id="leftTipInput" rows="3" oninput="renderCard()" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg p-2 text-xs text-[#F6F2EA]">Smiling lips, tongue tip behind upper teeth.</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-[#C84326] font-semibold mb-1">Right Red Badge &amp; Tip</label>
+                        <div class="flex gap-1.5 mb-1.5">
+                            <input id="rightBadgeInput" type="text" value="SH" oninput="renderCard()" class="w-12 bg-[#1A1714] border border-[#3A332C] rounded-lg px-2 py-1 text-xs font-bold text-center text-[#F6F2EA]">
+                            <span class="text-[11px] text-[#A39B8F] self-center">Target 2</span>
+                        </div>
+                        <textarea id="rightTipInput" rows="3" oninput="renderCard()" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg p-2 text-xs text-[#F6F2EA]">Rounded lips, pull tongue blade slightly back.</textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <div>
+                        <label class="block text-[11px] text-[#A39B8F] mb-1">Footer Top Gold Line</label>
+                        <input id="footerLine1Input" type="text" value="🎙️ Send a voice note, don't kill the fun." oninput="renderCard()" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-[#A39B8F] mb-1">Footer Bottom White Line</label>
+                        <input id="footerLine2Input" type="text" value="Follow @TheSlowEnglish" oninput="renderCard()" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA]">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Multi-Script Batch Queue Importer -->
+            <div class="bg-[#141210] border border-[#2E2924] rounded-2xl p-4 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-[#DCA03A]">
+                        5. Batch Queue / Add Custom Scripts
+                    </h3>
+                    <button onclick="downloadAllBatchPNGs()" class="px-2.5 py-1 bg-[#DCA03A] hover:bg-[#c98f2e] text-[#18120E] font-extrabold text-[11px] rounded-lg transition cursor-pointer">
+                        📦 Download All in Queue
+                    </button>
+                </div>
+                <p class="text-[11px] text-[#A39B8F]">
+                    Paste multiple 5-line scripts separated by a blank line to add them to your session queue:
+                </p>
+                <textarea id="batchPasteInput" rows="3" class="w-full bg-[#1A1714] border border-[#3A332C] rounded-xl p-2.5 text-xs font-mono text-[#F6F2EA]" placeholder="Paste 5-line script #1 here...&#10;&#10;Paste 5-line script #2 here..."></textarea>
+                <button onclick="importBatchScripts()" class="w-full py-2 bg-[#231F1B] hover:bg-[#2E2924] text-[#DCA03A] border border-[#3A332C] rounded-xl text-xs font-bold transition cursor-pointer">
+                    + Add Scripts to Queue &amp; Auto-Highlight
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- RIGHT LIVE PREVIEW AREA -->
+    <div class="flex-1 flex flex-col items-center justify-center p-3 sm:p-6 bg-[#0E0C0A] relative overflow-hidden min-h-[760px]">
+        
+        <!-- Top Status Bar -->
+        <div class="mb-3 flex flex-wrap items-center justify-center gap-3 bg-[#1A1714] px-4 py-2 rounded-full border border-[#2E2924] shadow z-10">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-semibold text-[#D5CFC4]">Cleaned 1080 × 1920px Master Layout • Click Any Word to Toggle Highlight</span>
+            <button onclick="downloadHighResPNG()" class="text-xs font-bold text-[#DCA03A] hover:underline cursor-pointer">
+                Save PNG →
+            </button>
+        </div>
+
+        <!-- Responsive Viewport Container that scales the exact 1080x1920 DOM Card -->
+        <div id="previewViewport" class="relative flex items-center justify-center w-full max-w-[432px] aspect-[9/16] shadow-[0_25px_70px_rgba(0,0,0,0.85)] rounded-2xl overflow-hidden border border-[#2E2924]">
+            
+            <!-- ACTUAL 1080x1920 MASTER DOM CARD (Scaled via CSS transform for preview, captured at 1:1 1080x1920 on export) -->
+            <div id="reelCardMaster" style="width: 1080px; height: 1920px; background-color: #F5EFE6; position: absolute; top: 0; left: 0; transform-origin: top left; overflow: hidden; font-family: 'Inter', sans-serif;">
+                
+                <!-- Subtle Architectural Grid Lines (Matching cleaned-up image) -->
+                <!-- Center Vertical Line -->
+                <div style="position: absolute; top: 0; bottom: 0; left: 540px; width: 1.5px; background-color: #DFD7C8; pointer-events: none;"></div>
+                <!-- Left & Right Margin Grid Lines -->
+                <div style="position: absolute; top: 0; bottom: 0; left: 42px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"></div>
+                <div style="position: absolute; top: 0; bottom: 0; right: 42px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"></div>
+                <!-- Horizontal Architectural Grid Lines -->
+                <div style="position: absolute; left: 0; right: 0; top: 158px; height: 1.5px; background-color: #DFD7C8; pointer-events: none;"></div>
+                <div style="position: absolute; left: 0; right: 0; top: 432px; height: 1.5px; background-color: #DFD7C8; pointer-events: none;"></div>
+                <div style="position: absolute; left: 0; right: 0; top: 1296px; height: 1.5px; background-color: #DFD7C8; pointer-events: none;"></div>
+                <div style="position: absolute; left: 0; right: 0; top: 1620px; height: 1.5px; background-color: #DFD7C8; pointer-events: none;"></div>
+
+                <!-- MAIN VERTICAL FLEX CONTAINER -->
+                <div style="position: relative; z-index: 10; width: 100%; height: 100%; padding: 44px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+                    
+                    <!-- 1. TOP BLACK HEADER BAR (Space-Between, Vertically Centered Text in Both Pills, No Left Gap) -->
+                    <div style="width: 100%; height: 114px; background-color: #18120E; border-radius: 22px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; position: relative; z-index: 10; box-sizing: border-box;">
+                        
+                        <!-- Left White Pill: DAILY VOCAL WORKOUT -->
+                        <div id="domWorkoutBadge" style="background-color: #F9F6F0; color: #18120E; font-weight: 800; font-size: 21px; letter-spacing: 0.03em; padding: 0 32px; height: 58px; border-radius: 999px; display: flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1; box-sizing: border-box;">
+                            DAILY VOCAL WORKOUT
+                        </div>
+
+                        <!-- Right Outlined Pill: CATEGORY 01 • S vs. SH -->
+                        <div id="domCategoryBadge" style="border: 1.5px solid rgba(255, 255, 255, 0.32); color: #ECE7DF; font-weight: 600; font-size: 20px; letter-spacing: 0.03em; padding: 0 28px; height: 58px; border-radius: 999px; display: flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1; box-sizing: border-box;">
+                            CATEGORY 01 • S vs. SH
+                        </div>
+                    </div>
+
+                    <!-- 2. RED HOOK BOX -->
+                    <div style="width: 100%; min-height: 224px; background-color: #C84326; border: 2.5px solid #2B1B12; border-radius: 24px; padding: 38px 48px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 10; box-sizing: border-box;">
+                        <div id="domHookText" style="color: #FAF6F0; font-weight: 800; font-size: 51px; line-height: 1.27; letter-spacing: -0.015em; white-space: pre-line;">Do you speak English fluently?
+Then try this without pausing:</div>
+                    </div>
+
+                    <!-- 3. MAIN TONGUE-TWISTER CARD -->
+                    <div style="width: 100%; height: 840px; background-color: #F8F4EC; border: 2.5px solid #2B1B12; border-radius: 26px; padding: 56px 64px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 10; box-sizing: border-box;">
+                        <div id="domScriptLines" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; width: 100%; max-width: 860px; padding: 6px 0; box-sizing: border-box;">
+                            <!-- Populated dynamically with interactive words -->
+                        </div>
+                    </div>
+
+                    <!-- 4. TWO-COLUMN PHONETIC GUIDE BOX -->
+                    <div style="width: 100%; min-height: 206px; background-color: #EFE9DC; border: 2.5px solid #2B1B12; border-radius: 22px; display: flex; flex-direction: row; overflow: hidden; position: relative; z-index: 10; box-sizing: border-box;">
+                        
+                        <!-- Left Column: Gold Badge + Tip -->
+                        <div style="width: 50%; padding: 30px 34px; border-right: 2.5px solid #2B1B12; display: flex; align-items: center; gap: 24px; box-sizing: border-box;">
+                            <div id="domLeftBadge" style="width: 82px; height: 82px; border-radius: 18px; background-color: #DCA03A; color: #14110F; font-weight: 800; font-size: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; text-align: center; box-sizing: border-box;">
+                                S
+                            </div>
+                            <div id="domLeftTip" style="color: #14110F; font-weight: 600; font-size: 31px; line-height: 1.26; letter-spacing: -0.01em;">
+                                Smiling lips, tongue tip behind upper teeth.
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Terracotta Badge + Tip -->
+                        <div style="width: 50%; padding: 30px 34px; display: flex; align-items: center; gap: 24px; box-sizing: border-box;">
+                            <div id="domRightBadge" style="width: 82px; height: 82px; border-radius: 18px; background-color: #C84326; color: #FAF6F0; font-weight: 800; font-size: 38px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; text-align: center; box-sizing: border-box;">
+                                SH
+                            </div>
+                            <div id="domRightTip" style="color: #14110F; font-weight: 600; font-size: 31px; line-height: 1.26; letter-spacing: -0.01em;">
+                                Rounded lips, pull tongue blade slightly back.
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 5. BOTTOM FOOTER PILL BAR -->
+                    <div style="width: 100%; height: 140px; background-color: #18120E; border-radius: 999px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 40px; position: relative; z-index: 10; box-sizing: border-box;">
+                        <div id="domFooterLine1" style="color: #DCA03A; font-weight: 700; font-size: 34px; line-height: 1.15; letter-spacing: -0.01em;">
+                            🎙️ Send a voice note, don't kill the fun.
+                        </div>
+                        <div id="domFooterLine2" style="color: #FFFFFF; font-weight: 800; font-size: 37px; line-height: 1.15; letter-spacing: -0.01em;">
+                            Follow @TheSlowEnglish
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-6 right-6 bg-[#18120E] border-2 border-[#DCA03A] text-[#F6F2EA] px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-2.5 opacity-0 pointer-events-none transition-all duration-300 z-50">
+            <span id="toastIcon">✅</span>
+            <span id="toastMsg">Downloaded 1080×1920 Reel PNG!</span>
+        </div>
+    </div>
+
+    <script>
+        // Master Queue of Ready-to-Post Scripts (Supports {gold} or _gold_ and [red pill])
+        const PRESETS = [
+            {
+                title: "#001 — Six Shy Sailors (Default S vs. SH)",
+                category: "CATEGORY 01 • S vs. SH",
+                hook: "Do you speak English fluently?\nThen try this without pausing:",
+                script: `If {six} [shy] {sailors} {sold}\n{seven} [shiny] {silver} [shirts],\nwhich [shy] {sailor} would {sell}\nthe [sharpest] {silver} [shirt] first,\nand which [shirt] would [she] {see}?`,
+                leftBadge: "S",
+                leftTip: "Smiling lips, tongue tip behind upper teeth.",
+                rightBadge: "SH",
+                rightTip: "Rounded lips, pull tongue blade slightly back."
+            },
+            {
+                title: "#002 — She Sells Seashells (S vs. SH)",
+                category: "CATEGORY 01 • S vs. SH",
+                hook: "Can you read this cleanly?\nTry all 5 lines in one breath:",
+                script: `[She] {sells} {seashells} by the {seashore},\nand the [shells] that [she] {sells}\nare {surely} {seashells} [she] [showed],\n{so} if [she] {sells} [shells] on the [shore],\nI'm {sure} [she] {sells} {seashore} [shells].`,
+                leftBadge: "S",
+                leftTip: "Smiling lips, tongue tip behind upper teeth.",
+                rightBadge: "SH",
+                rightTip: "Rounded lips, pull tongue blade slightly back."
+            },
+            {
+                title: "#003 — Seven Sharp Sharks (S vs. SH)",
+                category: "CATEGORY 01 • S vs. SH",
+                hook: "90% of speakers trip on Line 3.\nTest your tongue control now:",
+                script: `{Seven} [sharp] [sharks] {swam} {south}\nto [share] {six} {small} {silver} [ships],\nwhile {silent} [shadows] [shifted] {slowly}\nbeneath the [shining] {summer} {sea},\n{seeking} [shelter] near the [shore].`,
+                leftBadge: "S",
+                leftTip: "Smiling lips, tongue tip behind upper teeth.",
+                rightBadge: "SH",
+                rightTip: "Rounded lips, pull tongue blade slightly back."
+            },
+            {
+                title: "#004 — Sam's Shiny Shoes (S vs. SH)",
+                category: "CATEGORY 01 • S vs. SH",
+                hook: "Daily 15-Second Articulation Drill.\nRead aloud without rushing:",
+                script: `{Sam} [showed] {six} [shiny] [shoes]\nto {sister} {Suzy} at the [shoe] [shop],\nbut {Suzy} {said} the [shiny] [shoes]\n{seemed} too {small} to [shine] on {stage},\n{so} {Sam} [shopped] for {seven} [shirts].`,
+                leftBadge: "S",
+                leftTip: "Smiling lips, tongue tip behind upper teeth.",
+                rightBadge: "SH",
+                rightTip: "Rounded lips, pull tongue blade slightly back."
+            },
+            {
+                title: "#005 — Fresh Fried Fish (S vs. SH)",
+                category: "CATEGORY 01 • S vs. SH",
+                hook: "Don't blur your S and SH sounds!\nSpeak every word crisply:",
+                script: `[Fresh] fried [fish] and {salted} [shrimp]\n{sat} on {six} [shiny] {silver} [shelves],\nuntil the [shy] {sous-chef} [shared]\nthe {special} {savory} [shellfish] {sauce}\nwith {seven} {smiling} {sailors}.`,
+                leftBadge: "S",
+                leftTip: "Smiling lips, tongue tip behind upper teeth.",
+                rightBadge: "SH",
+                rightTip: "Rounded lips, pull tongue blade slightly back."
+            },
+            {
+                title: "#006 — Victor's Velvet Vest (V vs. W)",
+                category: "CATEGORY 02 • V vs. W",
+                hook: "Do you mix up V and W?\nRead this aloud without pausing:",
+                script: `{Victor} [washed] his {velvet} {vest}\nwhile [walking] [west] in [windy] [weather],\n{vowing} to {visit} [winter] {villages}\nwhere [wild] [wolves] [wandered] {very} [wide]\nacross the {valley's} [white] [woods].`,
+                leftBadge: "V",
+                leftTip: "Upper teeth gently touch lower lip and vibrate.",
+                rightBadge: "W",
+                rightTip: "Round lips tightly into a small circle, no teeth."
+            },
+            {
+                title: "#007 — Thirty-Three Thieves (TH vs. S)",
+                category: "CATEGORY 03 • TH vs. S",
+                hook: "Master the English TH sound!\nTry these 5 lines cleanly:",
+                script: `[Thirty-three] [thirsty] [thieves] {thought}\n[they] {saw} {six} {silver} [thimbles] {shine},\n{so} [they] { silently} {stepped} [through]\n[thick] [thorny] [thickets] on [Thursday]\nto {seize} the {seven} {smallest} [things].`,
+                leftBadge: "S",
+                leftTip: "Keep tongue tip behind teeth, crisp hissing air.",
+                rightBadge: "TH",
+                rightTip: "Place tongue tip lightly between upper and lower teeth."
+            },
+            {
+                title: "#008 — Red Lorry Yellow Lorry (L vs. R)",
+                category: "CATEGORY 04 • L vs. R",
+                hook: "The Ultimate L vs. R Workout.\nCan you finish without tripping?",
+                script: `{Little} [red] {lorries} [rolled] [rapidly]\nalong the {long} [rough] [rural] [road],\nwhile {lucky} [rabbits] {leaped} {lightly}\nover {large} [round] [river] [rocks]\nnear the {lonely} [rustic] [railroad].`,
+                leftBadge: "L",
+                leftTip: "Press tongue tip firmly against ridge behind upper teeth.",
+                rightBadge: "R",
+                rightTip: "Curl tongue tip slightly back without touching roof."
+            }
+        ];
+
+        let currentIndex = 0;
+
+        // Category Presets for instant reuse across series
+        const CATEGORY_TEMPLATES = {
+            S_SH: {
+                category: "CATEGORY 01 • S vs. SH",
+                leftBadge: "S",
+                leftTip: "Smiling lips, tongue tip behind upper teeth.",
+                rightBadge: "SH",
+                rightTip: "Rounded lips, pull tongue blade slightly back."
+            },
+            V_W: {
+                category: "CATEGORY 02 • V vs. W",
+                leftBadge: "V",
+                leftTip: "Upper teeth gently touch lower lip and vibrate.",
+                rightBadge: "W",
+                rightTip: "Round lips tightly into a small circle, no teeth."
+            },
+            TH_S: {
+                category: "CATEGORY 03 • S vs. TH",
+                leftBadge: "S",
+                leftTip: "Keep tongue tip behind teeth, crisp hissing air.",
+                rightBadge: "TH",
+                rightTip: "Place tongue tip lightly between upper and lower teeth."
+            },
+            L_R: {
+                category: "CATEGORY 04 • L vs. R",
+                leftBadge: "L",
+                leftTip: "Press tongue tip firmly against ridge behind upper teeth.",
+                rightBadge: "R",
+                rightTip: "Curl tongue tip slightly back without touching roof."
+            }
+        };
+
+        // Populate dropdown menu
+        function refreshPresetDropdown() {
+            const select = document.getElementById('presetSelect');
+            select.innerHTML = '';
+            PRESETS.forEach((p, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = p.title || `Script #${idx + 1}`;
+                if (idx === currentIndex) opt.selected = true;
+                select.appendChild(opt);
+            });
+            document.getElementById('queueCounter').textContent = `Script ${currentIndex + 1} of ${PRESETS.length}`;
+        }
+
+        function loadPreset(index) {
+            if (index < 0 || index >= PRESETS.length) return;
+            currentIndex = index;
+            const p = PRESETS[index];
+            document.getElementById('categoryInput').value = p.category;
+            document.getElementById('hookInput').value = p.hook;
+            document.getElementById('scriptInput').value = p.script;
+            document.getElementById('leftBadgeInput').value = p.leftBadge;
+            document.getElementById('leftTipInput').value = p.leftTip;
+            document.getElementById('rightBadgeInput').value = p.rightBadge;
+            document.getElementById('rightTipInput').value = p.rightTip;
+            refreshPresetDropdown();
+            renderCard();
+        }
+
+        function prevScript() {
+            const nextIdx = (currentIndex - 1 + PRESETS.length) % PRESETS.length;
+            loadPreset(nextIdx);
+        }
+
+        function nextScript() {
+            const nextIdx = (currentIndex + 1) % PRESETS.length;
+            loadPreset(nextIdx);
+        }
+
+        function applyCategoryPreset(key) {
+            const tpl = CATEGORY_TEMPLATES[key];
+            if (!tpl) return;
+            document.getElementById('categoryInput').value = tpl.category;
+            document.getElementById('leftBadgeInput').value = tpl.leftBadge;
+            document.getElementById('leftTipInput').value = tpl.leftTip;
+            document.getElementById('rightBadgeInput').value = tpl.rightBadge;
+            document.getElementById('rightTipInput').value = tpl.rightTip;
+            autoHighlightScript();
+            showToast(`Switched phonetic template to ${tpl.leftBadge} vs. ${tpl.rightBadge}!`);
+        }
+
+        // Strip all highlight brackets/braces/underscores
+        function stripHighlights() {
+            const el = document.getElementById('scriptInput');
+            el.value = el.value
+                .replace(/\[([^\]]+)\]/g, '$1')
+                .replace(/\{([^}]+)\}/g, '$1')
+                .replace(/_([^_]+)_/g, '$1');
+            renderCard();
+        }
+
+        // Smart Auto-Highlighter based on active Left & Right Badges (works for S/SH, V/W, TH/S, L/R)
+        function autoHighlightText(rawText, leftSound, rightSound) {
+            const clean = rawText
+                .replace(/\[([^\]]+)\]/g, '$1')
+                .replace(/\{([^}]+)\}/g, '$1')
+                .replace(/_([^_]+)_/g, '$1');
+
+            const stopWords = new Set(['is', 'as', 'was', 'his', 'has', 'this', 'us', 'its', 'the', 'to', 'in', 'on', 'and', 'for', 'of', 'with', 'by']);
+            const lBadge = (leftSound || 'S').trim().toUpperCase();
+            const rBadge = (rightSound || 'SH').trim().toUpperCase();
+
+            return clean.split('\n').map(line => {
+                // Strip any accidental leading 01-05 numbers
+                line = line.replace(/^\s*0?[1-9]\s*[:.-]?\s*/, '');
+                return line.split(/(\s+)/).map(token => {
+                    if (/^\s+$/.test(token) || !token) return token;
+                    const match = token.match(/^([^a-zA-Z0-9]*)([a-zA-Z0-9'-]+)([^a-zA-Z0-9]*)$/);
+                    if (!match) return token;
+                    const [, prefix, word, suffix] = match;
+                    const lower = word.toLowerCase();
+
+                    if (stopWords.has(lower)) return token;
+
+                    // Match rules based on active badge pair
+                    if (lBadge === 'S' && rBadge === 'SH') {
+                        if (lower.includes('sh')) return `${prefix}[${word}]${suffix}`;
+                        if (lower.startsWith('s') || lower.includes('ss')) return `${prefix}{${word}}${suffix}`;
+                    } else if (lBadge === 'V' && rBadge === 'W') {
+                        if (lower.startsWith('w') || lower.includes('wh')) return `${prefix}[${word}]${suffix}`;
+                        if (lower.startsWith('v') || lower.includes('vv')) return `${prefix}{${word}}${suffix}`;
+                    } else if (lBadge === 'S' && rBadge === 'TH') {
+                        if (lower.includes('th')) return `${prefix}[${word}]${suffix}`;
+                        if (lower.startsWith('s') || lower.includes('ss')) return `${prefix}{${word}}${suffix}`;
+                    } else if (lBadge === 'L' && rBadge === 'R') {
+                        if (lower.startsWith('r') || lower.includes('rr')) return `${prefix}[${word}]${suffix}`;
+                        if (lower.startsWith('l') || lower.includes('ll')) return `${prefix}{${word}}${suffix}`;
+                    } else {
+                        const rLow = rBadge.toLowerCase();
+                        const lLow = lBadge.toLowerCase();
+                        if (rLow && lower.startsWith(rLow)) return `${prefix}[${word}]${suffix}`;
+                        if (lLow && lower.startsWith(lLow)) return `${prefix}{${word}}${suffix}`;
+                    }
+                    return token;
+                }).join('');
+            }).join('\n');
+        }
+
+        function autoHighlightScript() {
+            const el = document.getElementById('scriptInput');
+            const lBadge = document.getElementById('leftBadgeInput').value;
+            const rBadge = document.getElementById('rightBadgeInput').value;
+            el.value = autoHighlightText(el.value, lBadge, rBadge);
+            renderCard();
+            showToast(`⚡ Auto-highlighted ${lBadge} (gold line) & ${rBadge} (red pill)!`);
+        }
+
+        // Cycle a single clicked word in the preview between Plain -> {Gold Underline} -> [Red Pill] -> Plain
+        function cycleWordStyle(lineIdx, tokenIdx) {
+            const el = document.getElementById('scriptInput');
+            const lines = el.value.split('\n');
+            if (!lines[lineIdx]) return;
+
+            // Clean any leading number
+            const cleanedLine = lines[lineIdx].trim().replace(/^0?[1-5]\s*[:.-]?\s*/, '');
+            const tokens = cleanedLine.split(/\s+/);
+            if (tokenIdx < 0 || tokenIdx >= tokens.length) return;
+
+            const raw = tokens[tokenIdx];
+            // Parse existing wrapper
+            const pillMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)\[([^\]]+)\]([^a-zA-Z0-9\}\]\']*)$/);
+            const goldMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)[\{_]([^\}\_]+)[\}_]([^a-zA-Z0-9\}\]\']*)$/);
+            const plainMatch = raw.match(/^([^a-zA-Z0-9]*)([a-zA-Z0-9'-]+)([^a-zA-Z0-9]*)$/);
+
+            if (goldMatch) {
+                // Gold -> Red Pill
+                tokens[tokenIdx] = `${goldMatch[1]}[${goldMatch[2]}]${goldMatch[3]}`;
+            } else if (pillMatch) {
+                // Red Pill -> Plain
+                tokens[tokenIdx] = `${pillMatch[1]}${pillMatch[2]}${pillMatch[3]}`;
+            } else if (plainMatch) {
+                // Plain -> Gold
+                tokens[tokenIdx] = `${plainMatch[1]}{${plainMatch[2]}}${plainMatch[3]}`;
+            }
+
+            lines[lineIdx] = tokens.join(' ');
+            el.value = lines.join('\n');
+            renderCard();
+        }
+
+        // Parse a line into tokens for DOM rendering
+        function parseLineTokens(lineText) {
+            const cleaned = lineText.trim().replace(/^0?[1-5]\s*[:.-]?\s*/, '');
+            if (!cleaned) return [];
+            return cleaned.split(/\s+/).map(raw => {
+                const pillMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)\[([^\]]+)\]([^a-zA-Z0-9\}\]\']*)$/);
+                if (pillMatch) {
+                    return { prefix: pillMatch[1], text: pillMatch[2], suffix: pillMatch[3], type: 'pill' };
+                }
+                const underMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)[\{_]([^\}\_]+)[\}_]([^a-zA-Z0-9\}\]\']*)$/);
+                if (underMatch) {
+                    return { prefix: underMatch[1], text: underMatch[2], suffix: underMatch[3], type: 'underline' };
+                }
+                return { prefix: '', text: raw, suffix: '', type: 'normal' };
+            });
+        }
+
+        // Render the 1080x1920 Master DOM Card
+        function renderCard(hideScript = false) {
+            document.getElementById('domWorkoutBadge').textContent =
+                (document.getElementById('workoutBadgeInput').value || 'DAILY VOCAL WORKOUT').toUpperCase();
+            document.getElementById('domCategoryBadge').textContent =
+                (document.getElementById('categoryInput').value || 'CATEGORY 01 • S vs. SH').toUpperCase();
+            document.getElementById('domHookText').textContent =
+                document.getElementById('hookInput').value || '';
+
+            document.getElementById('domLeftBadge').textContent =
+                document.getElementById('leftBadgeInput').value || 'S';
+            document.getElementById('domLeftTip').textContent =
+                document.getElementById('leftTipInput').value || '';
+            document.getElementById('domRightBadge').textContent =
+                document.getElementById('rightBadgeInput').value || 'SH';
+            document.getElementById('domRightTip').textContent =
+                document.getElementById('rightTipInput').value || '';
+
+            document.getElementById('domFooterLine1').textContent =
+                document.getElementById('footerLine1Input').value || '';
+            document.getElementById('domFooterLine2').textContent =
+                document.getElementById('footerLine2Input').value || '';
+
+            const scriptContainer = document.getElementById('domScriptLines');
+            scriptContainer.innerHTML = '';
+
+            if (hideScript) return;
+
+            const rawLines = (document.getElementById('scriptInput').value || '').split('\n').slice(0, 5);
+
+            // Dynamically scale font size slightly if any line is very long
+            const maxChars = Math.max(...rawLines.map(l => l.replace(/[\[\]\{\}_]/g, '').length), 24);
+            let fontSize = 53;
+            if (maxChars > 34) fontSize = 44;
+            else if (maxChars > 30) fontSize = 48;
+
+            rawLines.forEach((lineStr, lineIdx) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.style.display = 'flex';
+                rowDiv.style.flexWrap = 'nowrap';
+                rowDiv.style.alignItems = 'center';
+                rowDiv.style.justifyContent = 'flex-start';
+                rowDiv.style.gap = `${Math.round(fontSize * 0.26)}px`;
+                rowDiv.style.fontSize = `${fontSize}px`;
+                rowDiv.style.fontWeight = '800';
+                rowDiv.style.color = '#14110F';
+                rowDiv.style.letterSpacing = '-0.02em';
+                rowDiv.style.lineHeight = '1.25';
+                rowDiv.style.whiteSpace = 'nowrap';
+
+                const tokens = parseLineTokens(lineStr);
+                tokens.forEach((tk, tokenIdx) => {
+                    const tokenWrap = document.createElement('span');
+                    tokenWrap.className = 'interactive-word';
+                    tokenWrap.title = 'Click to cycle: Gold Underline → Red Pill → Plain';
+                    tokenWrap.onclick = () => cycleWordStyle(lineIdx, tokenIdx);
+                    tokenWrap.style.display = 'inline-flex';
+                    tokenWrap.style.alignItems = 'center';
+                    tokenWrap.style.position = 'relative';
+
+                    if (tk.prefix) {
+                        const pre = document.createElement('span');
+                        pre.textContent = tk.prefix;
+                        tokenWrap.appendChild(pre);
+                    }
+
+                    if (tk.type === 'pill') {
+                        const pill = document.createElement('span');
+                        pill.textContent = tk.text;
+                        pill.style.backgroundColor = '#C84326';
+                        pill.style.color = '#FAF6F0';
+                        pill.style.height = `${Math.round(fontSize * 1.32)}px`;
+                        pill.style.padding = '0 22px';
+                        pill.style.borderRadius = '999px';
+                        pill.style.display = 'inline-flex';
+                        pill.style.alignItems = 'center';
+                        pill.style.justifyContent = 'center';
+                        pill.style.lineHeight = '1';
+                        pill.style.boxSizing = 'border-box';
+                        tokenWrap.appendChild(pill);
+                    } else if (tk.type === 'underline') {
+                        const under = document.createElement('span');
+                        under.style.display = 'inline-block';
+                        under.style.position = 'relative';
+                        under.style.paddingBottom = '14px';
+                        under.style.marginBottom = '-14px';
+
+                        const textSpan = document.createElement('span');
+                        textSpan.textContent = tk.text;
+                        under.appendChild(textSpan);
+
+                        const bar = document.createElement('span');
+                        bar.style.position = 'absolute';
+                        bar.style.bottom = '0';
+                        bar.style.left = '0';
+                        bar.style.width = '100%';
+                        bar.style.height = '8px';
+                        bar.style.backgroundColor = '#D99B26';
+                        bar.style.borderRadius = '4px';
+                        under.appendChild(bar);
+
+                        tokenWrap.appendChild(under);
+                    } else {
+                        const normal = document.createElement('span');
+                        normal.textContent = tk.text;
+                        tokenWrap.appendChild(normal);
+                    }
+
+                    if (tk.suffix) {
+                        const suf = document.createElement('span');
+                        suf.textContent = tk.suffix;
+                        suf.style.marginLeft = '1px';
+                        tokenWrap.appendChild(suf);
+                    }
+
+                    rowDiv.appendChild(tokenWrap);
+                });
+
+                scriptContainer.appendChild(rowDiv);
+            });
+
+            // Sync current edits back to active preset in memory
+            if (PRESETS[currentIndex]) {
+                PRESETS[currentIndex].category = document.getElementById('categoryInput').value;
+                PRESETS[currentIndex].hook = document.getElementById('hookInput').value;
+                PRESETS[currentIndex].script = document.getElementById('scriptInput').value;
+                PRESETS[currentIndex].leftBadge = document.getElementById('leftBadgeInput').value;
+                PRESETS[currentIndex].leftTip = document.getElementById('leftTipInput').value;
+                PRESETS[currentIndex].rightBadge = document.getElementById('rightBadgeInput').value;
+                PRESETS[currentIndex].rightTip = document.getElementById('rightTipInput').value;
+            }
+        }
+
+        // Responsive scaling for the 1080x1920 DOM card inside previewViewport
+        function updatePreviewScale() {
+            const viewport = document.getElementById('previewViewport');
+            const master = document.getElementById('reelCardMaster');
+            if (!viewport || !master) return;
+            const scale = viewport.clientWidth / 1080;
+            master.style.transform = `scale(${scale})`;
+        }
+
+        // Export exact 1080x1920 PNG using html2canvas
+        async function captureCardPNG(filenamePrefix) {
+            const master = document.getElementById('reelCardMaster');
+            const prevTransform = master.style.transform;
+            master.style.transform = 'none';
+
+            try {
+                if (document.fonts && document.fonts.ready) {
+                    await document.fonts.ready;
+                }
+                const canvas = await html2canvas(master, {
+                    width: 1080,
+                    height: 1920,
+                    scale: 1,
+                    windowWidth: 1080,
+                    windowHeight: 1920,
+                    scrollX: 0,
+                    scrollY: 0,
+                    backgroundColor: '#F5EFE6',
+                    useCORS: true,
+                    logging: false
+                });
+
+                const dataUrl = canvas.toDataURL('image/png', 1.0);
+                const link = document.createElement('a');
+                link.download = `${filenamePrefix}-1080x1920.png`;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } finally {
+                master.style.transform = prevTransform;
+            }
+        }
+
+        async function downloadHighResPNG() {
+            renderCard(false);
+            const firstLine = (document.getElementById('scriptInput').value || 'slow-english-reel')
+                .split('\n')[0]
+                .replace(/[\[\]\{\}_]/g, '')
+                .replace(/[^a-zA-Z0-9]+/g, '-')
+                .toLowerCase()
+                .replace(/^-|-$/g, '')
+                .slice(0, 35);
+
+            showToast('⏳ Rendering crisp 1080×1920 PNG...');
+            await captureCardPNG(firstLine || 'slow-english-reel');
+            showToast('📸 Downloaded 1080×1920 Reel PNG!');
+        }
+
+        async function downloadBlankTemplatePNG() {
+            renderCard(true);
+            await captureCardPNG('slow-english-blank-template');
+            renderCard(false);
+            showToast('🖼️ Downloaded Blank 1080×1920 Template PNG!');
+        }
+
+        // Import multiple 5-line scripts into queue
+        function importBatchScripts() {
+            const raw = document.getElementById('batchPasteInput').value.trim();
+            if (!raw) {
+                showToast('⚠️ Paste at least one 5-line script first.');
+                return;
+            }
+            const blocks = raw.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+            const lBadge = document.getElementById('leftBadgeInput').value;
+            const rBadge = document.getElementById('rightBadgeInput').value;
+
+            blocks.forEach((block) => {
+                const highlighted = autoHighlightText(block, lBadge, rBadge);
+                const firstWords = block.split('\n')[0].replace(/[\[\]\{\}_]/g, '').slice(0, 26);
+                PRESETS.push({
+                    title: `#00${PRESETS.length + 1} — ${firstWords}...`,
+                    category: document.getElementById('categoryInput').value,
+                    hook: document.getElementById('hookInput').value,
+                    script: highlighted,
+                    leftBadge: lBadge,
+                    leftTip: document.getElementById('leftTipInput').value,
+                    rightBadge: rBadge,
+                    rightTip: document.getElementById('rightTipInput').value
+                });
+            });
+
+            document.getElementById('batchPasteInput').value = '';
+            loadPreset(PRESETS.length - blocks.length);
+            showToast(`✅ Added ${blocks.length} script(s) to queue & auto-highlighted!`);
+        }
+
+        // Batch download all scripts in queue sequentially
+        async function downloadAllBatchPNGs() {
+            const startIdx = currentIndex;
+            for (let i = 0; i < PRESETS.length; i++) {
+                loadPreset(i);
+                await new Promise(r => setTimeout(r, 150));
+                const slug = PRESETS[i].script.split('\n')[0]
+                    .replace(/[\[\]\{\}_]/g, '')
+                    .replace(/[^a-zA-Z0-9]+/g, '-')
+                    .toLowerCase()
+                    .replace(/^-|-$/g, '')
+                    .slice(0, 28);
+                await captureCardPNG(`reel-${String(i + 1).padStart(2, '0')}-${slug}`);
+                await new Promise(r => setTimeout(r, 250));
+            }
+            loadPreset(startIdx);
+            showToast(`📦 Exported all ${PRESETS.length} Reel PNGs!`);
+        }
+
+        function copyCaptionText() {
+            const rawScript = document.getElementById('scriptInput').value
+                .replace(/\[([^\]]+)\]/g, '$1')
+                .replace(/\{([^}]+)\}/g, '$1')
+                .replace(/_([^_]+)_/g, '$1');
+
+            const hook = document.getElementById('hookInput').value.replace(/\n/g, ' ');
+            const caption = `${hook}\n\n${rawScript}\n\n📌 Follow @TheSlowEnglish for daily vocal workouts!`;
+
+            const temp = document.createElement('textarea');
+            temp.value = caption;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+
+            showToast('📋 Copied clean script & caption to clipboard!');
+        }
+
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3200);
+        }
+
+        window.addEventListener('resize', updatePreviewScale);
+
+        function loadVaultFromStorage() {
+            try {
+                const raw = localStorage.getItem("theslowenglish_vault_scripts_v5");
+                if (raw) {
+                    const vaultScripts = JSON.parse(raw);
+                    if (Array.isArray(vaultScripts) && vaultScripts.length > 0) {
+                        vaultScripts.forEach((vs, idx) => {
+                            if (idx < 8) return; // Starter items already present
+                            const firstLine = (vs.lines[0] || '').replace(/[\[\]\{\}_]/g, '').slice(0, 30);
+                            PRESETS.push({
+                                title: `#${vs.id} — ${firstLine}...`,
+                                category: vs.category.toUpperCase().includes('CATEGORY') ? vs.category : `CATEGORY • ${vs.category}`,
+                                hook: vs.hook || "Do you speak English fluently?\nThen try this without pausing:",
+                                script: (vs.lines || []).join('\n'),
+                                leftBadge: vs.category.split(' ')[0] || "S",
+                                leftTip: "Articulate slowly and cleanly.",
+                                rightBadge: vs.category.split(' ')[2] || "SH",
+                                rightTip: "Smooth continuous airflow."
+                            });
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not read vault storage', e);
+            }
+        }
+
+        window.onload = function () {
+            loadVaultFromStorage();
+            refreshPresetDropdown();
+            loadPreset(0);
+            updatePreviewScale();
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => {
+                    renderCard();
+                    updatePreviewScale();
+                });
+            }
+        };
+    </script>
+</body>
+</html>

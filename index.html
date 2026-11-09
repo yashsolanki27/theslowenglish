@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TheSlowEnglish (@theslowenglish)</title>
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <!-- html2canvas for crisp 1080x1920 DOM-to-PNG rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- JSZip for 1-click batch download of multiple Reel PNGs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -94,6 +98,16 @@
         border-radius: 999px;
         margin: 0 auto 0.35rem auto;
         opacity: 0.85;
+      }
+      /* Interactive word styling in Live 1080x1920 Reel Studio */
+      .interactive-word {
+        cursor: pointer;
+        transition: transform 0.1s ease, filter 0.1s ease;
+        user-select: none;
+      }
+      .interactive-word:hover {
+        filter: brightness(0.92);
+        transform: translateY(-1px);
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -239,17 +253,34 @@
 
         <!-- Primary Mode Switch & Utility Controls -->
         <div class="flex flex-wrap items-center gap-2">
-          <!-- Mode Toggle Button (Option A vs Option B) -->
-          <button
-            id="btnToggleEbookMode"
-            type="button"
-            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-display text-xs sm:text-sm font-semibold bg-espresso hover:bg-espressoDark text-parchment shadow-sm transition-all cursor-pointer"
-          >
-            <span id="ebookToggleIcon">📖</span>
-            <span id="ebookToggleLabel"
-              >Switch to eBook Mode / Save as PDF</span
+          <!-- View Switcher Segmented Control -->
+          <div class="inline-flex p-1 rounded-xl bg-parchmentCard dark:bg-darkCard border border-[#D5C7B4] dark:border-darkBorder shadow-sm gap-1">
+            <button
+              id="btnNavDashboard"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display text-xs sm:text-sm font-bold bg-espresso text-parchment shadow-sm transition-all cursor-pointer"
             >
-          </button>
+              <span>📊</span>
+              <span>Vault Dashboard</span>
+            </button>
+            <button
+              id="btnNavStudio"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display text-xs sm:text-sm font-semibold text-ink dark:text-parchment hover:text-espresso dark:hover:text-goldAccent transition-all cursor-pointer"
+            >
+              <span>📸</span>
+              <span>Reel Studio</span>
+              <span class="px-1.5 py-0.2 text-[10px] bg-[#C84326] text-white rounded-full font-bold">1080p</span>
+            </button>
+            <button
+              id="btnToggleEbookMode"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display text-xs sm:text-sm font-semibold text-ink dark:text-parchment hover:text-espresso dark:hover:text-goldAccent transition-all cursor-pointer"
+            >
+              <span id="ebookToggleIcon">📖</span>
+              <span id="ebookToggleLabel">eBook Mode</span>
+            </button>
+          </div>
 
           <!-- Batch Importer Modal Button -->
           <button
@@ -536,6 +567,52 @@
         </div>
       </div>
 
+      <!-- Bulk Selection & Studio Actions Bar -->
+      <div
+        id="bulkActionBar"
+        class="bg-parchmentCard dark:bg-darkCard border border-[#DFD5C5] dark:border-darkBorder rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm"
+      >
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 text-xs font-bold text-ink dark:text-parchment cursor-pointer select-none">
+            <input
+              type="checkbox"
+              id="cbSelectAllFiltered"
+              class="w-4 h-4 rounded text-espresso accent-[#C84326]"
+            />
+            <span>Select All Filtered</span>
+          </label>
+          <span
+            id="bulkSelectedBadge"
+            class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-espresso/15 text-espresso dark:bg-goldAccent/20 dark:text-goldAccent"
+          >
+            0 Selected
+          </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="btnBulkOpenStudio"
+            type="button"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#C84326] hover:bg-[#b0381e] text-white shadow-sm transition cursor-pointer"
+          >
+            📸 Open Selected in Studio
+          </button>
+          <button
+            id="btnBulkExportZip"
+            type="button"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#DCA03A] hover:bg-[#c98f2e] text-[#18120E] shadow-sm transition cursor-pointer"
+          >
+            📦 Batch Download PNGs (ZIP)
+          </button>
+          <button
+            id="btnBulkDeselect"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[#D5C7B4] dark:border-darkBorder text-inkMuted dark:text-parchment hover:text-ink transition cursor-pointer"
+          >
+            Clear Selection
+          </button>
+        </div>
+      </div>
+
       <!-- 3. SCRIPT CARDS GRID (#001 to #N) -->
       <section
         id="scriptsGrid"
@@ -578,6 +655,693 @@
         </div>
       </div>
     </main>
+
+    <!-- =================================================================== -->
+    <!-- OPTION C: 1-CLICK 1080x1920 REEL PNG GENERATOR STUDIO               -->
+    <!-- =================================================================== -->
+    <section
+      id="studioView"
+      class="hidden flex-1 w-full bg-[#12100E] text-[#F6F2EA] flex flex-col lg:flex-row overflow-x-hidden min-h-[calc(100vh-70px)]"
+    >
+      <!-- LEFT SIDEBAR: REUSABLE STUDIO CONTROLS -->
+      <div
+        class="w-full lg:w-[500px] xl:w-[560px] bg-[#1A1714] border-b lg:border-b-0 lg:border-r border-[#2E2924] flex flex-col h-auto lg:h-[calc(100vh-70px)] lg:overflow-y-auto shrink-0 z-20"
+      >
+        <!-- Sticky Studio Top Header -->
+        <div
+          class="p-4 sm:p-5 border-b border-[#2E2924] flex items-center justify-between bg-[#141210] sticky top-0 z-30"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-9 h-9 rounded-xl bg-[#C84326] flex items-center justify-center font-black text-white text-base shadow-inner"
+            >
+              SE
+            </div>
+            <div>
+              <h2
+                class="font-bold text-base text-[#F6F2EA] tracking-tight leading-none"
+              >
+                Slow English Reel PNG Studio
+              </h2>
+              <p class="text-xs text-[#A39B8F] mt-1">
+                Connected to Vault (400 Twisters) • Click Words to Highlight
+              </p>
+            </div>
+          </div>
+          <span
+            class="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#28231E] text-[#DCA03A] rounded-full border border-[#3A332C]"
+          >
+            1080×1920
+          </span>
+        </div>
+
+        <div class="p-4 sm:p-5 space-y-5 flex-1">
+          <!-- Primary Export Actions -->
+          <div
+            class="bg-[#231F1B] p-4 rounded-2xl border border-[#3A332C] shadow-lg space-y-2.5"
+          >
+            <button
+              id="btnStudioDownloadSingle"
+              type="button"
+              class="w-full py-3.5 px-5 bg-[#C84326] hover:bg-[#b0381e] active:scale-[0.99] transition-all text-white font-extrabold text-base rounded-xl shadow-lg flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <span>📸</span>
+              <span>Download 1080×1920 Reel PNG</span>
+            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                id="btnStudioBatchExport"
+                type="button"
+                class="py-2.5 px-3 bg-[#DCA03A] hover:bg-[#c98f2e] text-[#18120E] rounded-xl text-xs font-extrabold transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>📦</span>
+                <span>Batch Export (<span id="studioBatchBadge">0</span>)</span>
+              </button>
+              <button
+                id="btnStudioBlankTemplate"
+                type="button"
+                class="py-2.5 px-3 bg-[#181512] hover:bg-[#28231E] text-[#D5CFC4] border border-[#3A332C] rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Download blank card without script text for Canva or CapCut"
+              >
+                <span>🖼️</span>
+                <span>Blank Template PNG</span>
+              </button>
+            </div>
+            <button
+              id="btnStudioCopyCaption"
+              type="button"
+              class="w-full py-2 px-3 bg-[#181512] hover:bg-[#28231E] text-[#D5CFC4] border border-[#3A332C] rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>📋</span>
+              <span>Copy Clean Instagram Caption</span>
+            </button>
+          </div>
+
+          <!-- 1. Twister Vault Selector & Batch Queue Modal -->
+          <div
+            class="bg-[#141210] border border-[#2E2924] rounded-2xl p-4 space-y-3"
+          >
+            <div class="flex items-center justify-between">
+              <label
+                class="text-xs font-bold uppercase tracking-wider text-[#DCA03A]"
+              >
+                1. Select Twister from Vault
+              </label>
+              <span id="studioQueueCounter" class="text-xs font-mono text-[#A39B8F]">
+                Script 1 of 400
+              </span>
+            </div>
+
+            <!-- Filter by Category inside Studio -->
+            <div>
+              <label class="block text-[11px] text-[#A39B8F] mb-1">
+                Filter Category:
+              </label>
+              <select
+                id="studioCategoryFilter"
+                class="w-full bg-[#1A1714] border border-[#3A332C] rounded-xl px-3 py-2 text-xs text-[#F6F2EA] focus:outline-none focus:border-[#C84326]"
+              >
+                <option value="ALL">All 16 Categories (400 Scripts)</option>
+              </select>
+            </div>
+
+            <!-- Main Script Dropdown & Prev/Next -->
+            <div class="flex gap-2">
+              <button
+                id="btnStudioPrev"
+                type="button"
+                class="px-3 py-2 bg-[#231F1B] hover:bg-[#2E2924] text-[#F6F2EA] border border-[#3A332C] rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                ← Prev
+              </button>
+              <select
+                id="studioScriptSelect"
+                class="flex-1 bg-[#1A1714] border border-[#3A332C] rounded-xl px-3 py-2 text-xs sm:text-sm text-[#F6F2EA] focus:outline-none focus:border-[#C84326]"
+              ></select>
+              <button
+                id="btnStudioNext"
+                type="button"
+                class="px-3 py-2 bg-[#231F1B] hover:bg-[#2E2924] text-[#F6F2EA] border border-[#3A332C] rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                Next →
+              </button>
+            </div>
+
+            <!-- Open Full Multi-Select Modal -->
+            <button
+              id="btnOpenTwisterSelectModal"
+              type="button"
+              class="w-full py-2.5 px-3 bg-[#231F1B] hover:bg-[#2E2924] text-[#DCA03A] border border-[#4D4236] rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            >
+              <span>☑️</span>
+              <span>Open Twister Selection Checklist (All 400)</span>
+            </button>
+
+            <!-- Category Quick Presets -->
+            <div class="pt-1">
+              <span class="block text-[11px] text-[#A39B8F] mb-1.5">
+                Quick Category Switch:
+              </span>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button
+                  type="button"
+                  data-cat-preset="S vs. SH"
+                  class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer"
+                >
+                  S vs. SH
+                </button>
+                <button
+                  type="button"
+                  data-cat-preset="V vs. W"
+                  class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer"
+                >
+                  V vs. W
+                </button>
+                <button
+                  type="button"
+                  data-cat-preset="TH vs. S / T / D"
+                  class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer"
+                >
+                  TH vs. S
+                </button>
+                <button
+                  type="button"
+                  data-cat-preset="R vs. L"
+                  class="py-1.5 px-2 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-[11px] font-bold text-[#F6F2EA] transition cursor-pointer"
+                >
+                  R vs. L
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 5-Line Tongue Twister Script Editor -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between flex-wrap gap-1">
+              <label
+                class="block text-xs font-bold uppercase tracking-wider text-[#DCA03A]"
+              >
+                2. 5-Line Tongue Twister Script
+              </label>
+              <div class="flex items-center gap-1.5">
+                <button
+                  id="btnStudioAutoHighlight"
+                  type="button"
+                  class="px-2.5 py-1 bg-[#2B251F] hover:bg-[#3A322A] text-[#DCA03A] border border-[#4D4236] rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                  title="Automatically wrap target sounds in [red pills] and {gold underlines}"
+                >
+                  ⚡ Auto-Highlight Sounds
+                </button>
+                <button
+                  id="btnStudioClearHighlights"
+                  type="button"
+                  class="px-2 py-1 bg-[#231F1B] hover:bg-[#2E2924] text-[#A39B8F] border border-[#3A332C] rounded-lg text-xs transition cursor-pointer"
+                >
+                  Clear Tags
+                </button>
+              </div>
+            </div>
+
+            <textarea
+              id="studioScriptInput"
+              rows="5"
+              class="w-full bg-[#12100E] border border-[#3A332C] rounded-xl p-3.5 text-sm font-mono text-[#F6F2EA] leading-relaxed focus:outline-none focus:border-[#C84326]"
+              placeholder="Enter 5 lines (1 per line)..."
+            ></textarea>
+
+            <!-- Syntax Helper -->
+            <div class="grid grid-cols-2 gap-2 pt-0.5">
+              <div
+                class="bg-[#141210] border border-[#2E2924] rounded-lg p-2 flex items-center gap-2"
+              >
+                <span
+                  class="px-2 py-0.5 bg-[#C84326] text-white font-bold text-xs rounded-full"
+                  >[word]</span
+                >
+                <span class="text-xs text-[#A39B8F]">= Red Pill</span>
+              </div>
+              <div
+                class="bg-[#141210] border border-[#2E2924] rounded-lg p-2 flex items-center gap-2"
+              >
+                <span
+                  class="px-1 font-bold text-xs text-[#F6F2EA] border-b-[3px] border-[#D99B26]"
+                  >{word}</span
+                >
+                <span class="text-xs text-[#A39B8F]">= Gold Underline</span>
+              </div>
+            </div>
+            <p class="text-[11px] text-[#A39B8F]">
+              💡 <strong class="text-[#F6F2EA]">Pro Tip:</strong> Click any word directly on the live card preview on the right to cycle between
+              <span class="underline decoration-[#D99B26] decoration-2"
+                >Gold Underline</span
+              >
+              →
+              <span
+                class="px-1.5 py-0.2 bg-[#C84326] text-white rounded-full text-[10px]"
+                >Red Pill</span
+              >
+              → Plain!
+            </p>
+          </div>
+
+          <!-- 3. Top Header & Hook Controls -->
+          <div
+            class="bg-[#141210] border border-[#2E2924] rounded-2xl p-4 space-y-3"
+          >
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#A39B8F]">
+              3. Top Header Bar &amp; Red Hook Box
+            </h3>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] text-[#A39B8F] mb-1"
+                  >Center White Pill</label
+                >
+                <input
+                  id="studioWorkoutBadgeInput"
+                  type="text"
+                  value="DAILY VOCAL WORKOUT"
+                  class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA] font-semibold focus:outline-none focus:border-[#C84326]"
+                />
+              </div>
+              <div>
+                <label class="block text-[11px] text-[#A39B8F] mb-1"
+                  >Right Outlined Pill</label
+                >
+                <input
+                  id="studioCategoryInput"
+                  type="text"
+                  value="CATEGORY 01 • S vs. SH"
+                  class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA] font-semibold focus:outline-none focus:border-[#C84326]"
+                />
+              </div>
+            </div>
+            <div>
+              <label class="block text-[11px] text-[#A39B8F] mb-1"
+                >Red Hook Box (2 Lines)</label
+              >
+              <textarea
+                id="studioHookInput"
+                rows="2"
+                class="w-full bg-[#1A1714] border border-[#3A332C] rounded-xl p-2.5 text-xs sm:text-sm text-[#F6F2EA] focus:outline-none focus:border-[#C84326]"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- 4. Two-Column Phonetic Guide Box & Footer Controls -->
+          <div
+            class="bg-[#141210] border border-[#2E2924] rounded-2xl p-4 space-y-3"
+          >
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#A39B8F]">
+              4. Two-Column Phonetic Guide Box &amp; Footer
+            </h3>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  class="block text-[11px] text-[#DCA03A] font-semibold mb-1"
+                  >Left Gold Badge &amp; Tip</label
+                >
+                <div class="flex gap-1.5 mb-1.5">
+                  <input
+                    id="studioLeftBadgeInput"
+                    type="text"
+                    value="S"
+                    class="w-16 bg-[#1A1714] border border-[#3A332C] rounded-lg px-2 py-1 text-xs font-bold text-center text-[#F6F2EA]"
+                  />
+                  <span class="text-[11px] text-[#A39B8F] self-center"
+                    >Target 1</span
+                  >
+                </div>
+                <textarea
+                  id="studioLeftTipInput"
+                  rows="3"
+                  class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg p-2 text-xs text-[#F6F2EA]"
+                ></textarea>
+              </div>
+              <div>
+                <label
+                  class="block text-[11px] text-[#C84326] font-semibold mb-1"
+                  >Right Red Badge &amp; Tip</label
+                >
+                <div class="flex gap-1.5 mb-1.5">
+                  <input
+                    id="studioRightBadgeInput"
+                    type="text"
+                    value="SH"
+                    class="w-16 bg-[#1A1714] border border-[#3A332C] rounded-lg px-2 py-1 text-xs font-bold text-center text-[#F6F2EA]"
+                  />
+                  <span class="text-[11px] text-[#A39B8F] self-center"
+                    >Target 2</span
+                  >
+                </div>
+                <textarea
+                  id="studioRightTipInput"
+                  rows="3"
+                  class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg p-2 text-xs text-[#F6F2EA]"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+              <div>
+                <label class="block text-[11px] text-[#A39B8F] mb-1"
+                  >Footer Line 1 (Gold)</label
+                >
+                <input
+                  id="studioFooterLine1Input"
+                  type="text"
+                  value="🎙️ Send a voice note, don't kill the fun."
+                  class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA]"
+                />
+              </div>
+              <div>
+                <label class="block text-[11px] text-[#A39B8F] mb-1"
+                  >Footer Line 2 (White)</label
+                >
+                <input
+                  id="studioFooterLine2Input"
+                  type="text"
+                  value="Follow @TheSlowEnglish"
+                  class="w-full bg-[#1A1714] border border-[#3A332C] rounded-lg px-2.5 py-1.5 text-xs text-[#F6F2EA]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT LIVE PREVIEW AREA -->
+      <div
+        class="flex-1 flex flex-col items-center justify-center p-3 sm:p-6 bg-[#0E0C0A] relative overflow-hidden min-h-[820px]"
+      >
+        <!-- Top Status Bar -->
+        <div
+          class="mb-3 flex flex-wrap items-center justify-center gap-3 bg-[#1A1714] px-4 py-2 rounded-full border border-[#2E2924] shadow z-10"
+        >
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-xs font-semibold text-[#D5CFC4]">
+            Cleaned 1080 × 1920px Master Layout • Click Any Word on Preview to Style
+          </span>
+          <button
+            id="btnStudioQuickSave"
+            type="button"
+            class="text-xs font-bold text-[#DCA03A] hover:underline cursor-pointer"
+          >
+            Save PNG →
+          </button>
+        </div>
+
+        <!-- Responsive Viewport Container that scales the exact 1080x1920 DOM Card -->
+        <div
+          id="previewViewport"
+          class="relative flex items-center justify-center w-full max-w-[432px] aspect-[9/16] shadow-[0_25px_70px_rgba(0,0,0,0.85)] rounded-2xl overflow-hidden border border-[#2E2924]"
+        >
+          <!-- ACTUAL 1080x1920 MASTER DOM CARD (Scaled via CSS transform for preview, captured 1:1 on export) -->
+          <div
+            id="reelCardMaster"
+            style="width: 1080px; height: 1920px; background-color: #F5EFE6; position: absolute; top: 0; left: 0; transform-origin: top left; overflow: hidden; font-family: 'Inter', sans-serif; padding: 44px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;"
+          >
+            <!-- Architectural Background Lines -->
+            <div
+              style="position: absolute; top: 0; bottom: 0; left: 540px; width: 1.5px; background-color: #DFD7C8; pointer-events: none;"
+            ></div>
+            <div
+              style="position: absolute; top: 0; bottom: 0; left: 44px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"
+            ></div>
+            <div
+              style="position: absolute; top: 0; bottom: 0; right: 44px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"
+            ></div>
+
+            <!-- 1. TOP BLACK HEADER BAR -->
+            <div
+              style="width: 100%; height: 114px; background-color: #18120E; border-radius: 22px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; position: relative; z-index: 10; box-sizing: border-box;"
+            >
+              <!-- Left White Pill: DAILY VOCAL WORKOUT -->
+              <div
+                id="domWorkoutBadge"
+                style="background-color: #F9F6F0; color: #18120E; font-weight: 800; font-size: 21px; letter-spacing: 0.03em; padding: 0 32px; height: 58px; border-radius: 999px; display: flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1; box-sizing: border-box;"
+              >
+                DAILY VOCAL WORKOUT
+              </div>
+
+              <!-- Right Outlined Pill: CATEGORY 01 • S vs. SH -->
+              <div
+                id="domCategoryBadge"
+                style="border: 1.5px solid rgba(255, 255, 255, 0.32); color: #ECE7DF; font-weight: 600; font-size: 20px; letter-spacing: 0.03em; padding: 0 28px; height: 58px; border-radius: 999px; display: flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1; box-sizing: border-box;"
+              >
+                CATEGORY 01 • S vs. SH
+              </div>
+            </div>
+
+            <!-- 2. RED HOOK BOX -->
+            <div
+              style="width: 100%; min-height: 224px; background-color: #C84326; border: 2.5px solid #2B1B12; border-radius: 24px; padding: 38px 48px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 10; box-sizing: border-box;"
+            >
+              <div
+                id="domHookText"
+                style="color: #FAF6F0; font-weight: 800; font-size: 51px; line-height: 1.27; letter-spacing: -0.015em; white-space: pre-line;"
+              >
+                Do you speak English fluently?
+Then try this without pausing:
+              </div>
+            </div>
+
+            <!-- 3. MAIN TONGUE-TWISTER CARD -->
+            <div
+              style="width: 100%; height: 840px; background-color: #F8F4EC; border: 2.5px solid #2B1B12; border-radius: 26px; padding: 56px 64px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 10; box-sizing: border-box;"
+            >
+              <div
+                id="domScriptLines"
+                style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; width: 100%; max-width: 860px; padding: 6px 0; box-sizing: border-box;"
+              >
+                <!-- Populated dynamically with interactive words -->
+              </div>
+            </div>
+
+            <!-- 4. TWO-COLUMN PHONETIC GUIDE BOX -->
+            <div
+              style="width: 100%; min-height: 206px; background-color: #EFE9DC; border: 2.5px solid #2B1B12; border-radius: 22px; display: flex; flex-direction: row; overflow: hidden; position: relative; z-index: 10; box-sizing: border-box;"
+            >
+              <!-- Left Column: Gold Badge + Tip -->
+              <div
+                style="width: 50%; padding: 30px 34px; border-right: 2.5px solid #2B1B12; display: flex; align-items: center; gap: 24px; box-sizing: border-box;"
+              >
+                <div
+                  id="domLeftBadge"
+                  style="width: 82px; height: 82px; border-radius: 18px; background-color: #DCA03A; color: #14110F; font-weight: 800; font-size: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; text-align: center; box-sizing: border-box;"
+                >
+                  S
+                </div>
+                <div
+                  id="domLeftTip"
+                  style="color: #14110F; font-weight: 600; font-size: 31px; line-height: 1.26; letter-spacing: -0.01em;"
+                >
+                  Smiling lips, tongue tip behind upper teeth.
+                </div>
+              </div>
+
+              <!-- Right Column: Terracotta Badge + Tip -->
+              <div
+                style="width: 50%; padding: 30px 34px; display: flex; align-items: center; gap: 24px; box-sizing: border-box;"
+              >
+                <div
+                  id="domRightBadge"
+                  style="width: 82px; height: 82px; border-radius: 18px; background-color: #C84326; color: #FAF6F0; font-weight: 800; font-size: 38px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; text-align: center; box-sizing: border-box;"
+                >
+                  SH
+                </div>
+                <div
+                  id="domRightTip"
+                  style="color: #14110F; font-weight: 600; font-size: 31px; line-height: 1.26; letter-spacing: -0.01em;"
+                >
+                  Rounded lips, pull tongue blade slightly back.
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. BOTTOM FOOTER PILL BAR -->
+            <div
+              style="width: 100%; height: 140px; background-color: #18120E; border-radius: 999px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 40px; position: relative; z-index: 10; box-sizing: border-box;"
+            >
+              <div
+                id="domFooterLine1"
+                style="color: #DCA03A; font-weight: 700; font-size: 34px; line-height: 1.15; letter-spacing: -0.01em;"
+              >
+                🎙️ Send a voice note, don't kill the fun.
+              </div>
+              <div
+                id="domFooterLine2"
+                style="color: #FFFFFF; font-weight: 800; font-size: 37px; line-height: 1.15; letter-spacing: -0.01em;"
+              >
+                Follow @TheSlowEnglish
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TWISTER MULTI-SELECT QUEUE MODAL                                    -->
+    <!-- =================================================================== -->
+    <div
+      id="twisterSelectModal"
+      class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+    >
+      <div
+        class="bg-[#1A1714] text-[#F6F2EA] border border-[#3A332C] rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+      >
+        <!-- Modal Top Header -->
+        <div
+          class="p-4 sm:p-5 border-b border-[#2E2924] flex items-center justify-between bg-[#141210]"
+        >
+          <div>
+            <h3 class="font-bold text-lg text-[#F6F2EA]">
+              Select Twisters for PNG Generation
+            </h3>
+            <p class="text-xs text-[#A39B8F] mt-0.5">
+              Choose any or all twisters from the vault to batch-export as 1080×1920 Reel PNGs
+            </p>
+          </div>
+          <button
+            id="btnCloseTwisterModal"
+            type="button"
+            class="text-[#A39B8F] hover:text-white text-xl p-1 rounded-lg cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Filter & Search Controls inside Modal -->
+        <div class="p-4 border-b border-[#2E2924] bg-[#181512] space-y-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              id="inputModalTwisterSearch"
+              placeholder="Search by #ID or word (e.g. #042 or 'sailors')..."
+              class="flex-1 min-w-[200px] bg-[#12100E] border border-[#3A332C] rounded-xl px-3 py-2 text-xs text-[#F6F2EA] focus:outline-none focus:border-[#C84326]"
+            />
+            <select
+              id="selectModalCategoryFilter"
+              class="bg-[#12100E] border border-[#3A332C] rounded-xl px-3 py-2 text-xs text-[#F6F2EA] focus:outline-none focus:border-[#C84326]"
+            >
+              <option value="ALL">All Categories</option>
+            </select>
+          </div>
+
+          <!-- Quick Selector Buttons -->
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <button
+                id="btnModalSelectAll"
+                type="button"
+                class="px-2.5 py-1 bg-[#231F1B] hover:bg-[#2E2924] text-[#DCA03A] border border-[#3A332C] rounded-lg font-semibold cursor-pointer"
+              >
+                Select All 400
+              </button>
+              <button
+                id="btnModalSelectVisible"
+                type="button"
+                class="px-2.5 py-1 bg-[#231F1B] hover:bg-[#2E2924] text-[#D5CFC4] border border-[#3A332C] rounded-lg font-semibold cursor-pointer"
+              >
+                Select Visible
+              </button>
+              <button
+                id="btnModalClearSelection"
+                type="button"
+                class="px-2.5 py-1 bg-[#231F1B] hover:bg-[#2E2924] text-[#A39B8F] border border-[#3A332C] rounded-lg cursor-pointer"
+              >
+                Select None
+              </button>
+            </div>
+            <span
+              id="modalSelectionSummary"
+              class="font-mono text-xs font-bold text-[#DCA03A]"
+            >
+              0 of 400 Selected
+            </span>
+          </div>
+        </div>
+
+        <!-- Scrollable Twisters Checklist -->
+        <div
+          id="modalTwistersList"
+          class="flex-1 overflow-y-auto p-4 space-y-2 max-h-[50vh]"
+        >
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Modal Bottom Actions -->
+        <div
+          class="p-4 border-t border-[#2E2924] bg-[#141210] flex flex-wrap items-center justify-between gap-3"
+        >
+          <div class="text-xs text-[#A39B8F]">
+            Batch export automatically downloads crisp 1080×1920 PNG cards
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              id="btnModalLoadQueue"
+              type="button"
+              class="px-3.5 py-2 bg-[#231F1B] hover:bg-[#2E2924] text-[#F6F2EA] border border-[#3A332C] rounded-xl text-xs font-bold cursor-pointer"
+            >
+              Load into Studio Queue
+            </button>
+            <button
+              id="btnModalDownloadZip"
+              type="button"
+              class="px-4 py-2 bg-[#C84326] hover:bg-[#b0381e] text-white font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>📦</span>
+              <span>Download Selected as ZIP</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- BATCH GENERATION PROGRESS MODAL                                     -->
+    <!-- =================================================================== -->
+    <div
+      id="batchProgressModal"
+      class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+    >
+      <div
+        class="bg-[#1A1714] text-[#F6F2EA] border-2 border-[#DCA03A] rounded-2xl w-full max-w-md p-6 shadow-2xl text-center space-y-4"
+      >
+        <div class="text-4xl animate-bounce">📸</div>
+        <div>
+          <h3 class="font-bold text-lg text-[#F6F2EA]">
+            Generating 1080×1920 Reel PNGs
+          </h3>
+          <p id="batchProgressSubtitle" class="text-xs text-[#A39B8F] mt-1">
+            Rendering high-resolution cards...
+          </p>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full bg-[#12100E] rounded-full h-3.5 border border-[#3A332C] overflow-hidden">
+          <div
+            id="batchProgressBarFill"
+            class="bg-gradient-to-r from-[#DCA03A] to-[#C84326] h-full transition-all duration-200"
+            style="width: 0%"
+          ></div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs font-mono text-[#A39B8F]">
+          <span id="batchProgressText">0 / 0 Completed</span>
+          <span id="batchProgressPercent">0%</span>
+        </div>
+
+        <button
+          id="btnCancelBatchExport"
+          type="button"
+          class="px-4 py-1.5 bg-[#231F1B] hover:bg-[#2E2924] border border-[#3A332C] rounded-lg text-xs font-semibold text-[#A39B8F] hover:text-white cursor-pointer"
+        >
+          Cancel Export
+        </button>
+      </div>
+    </div>
 
     <!-- =================================================================== -->
     <!-- OPTION B: MASTER EBOOK PDF GENERATOR MODE                           -->
@@ -7129,6 +7893,11 @@ How to play:
         let currentSearchQuery = "";
         let isEbookMode = false;
         let ebookCompletedMap = {};
+        let currentView = "dashboard"; // 'dashboard' | 'studio' | 'ebook'
+        let selectedScriptIds = new Set();
+        let studioActiveIndex = 0;
+        let studioFilteredList = [];
+        let isBatchCancelled = false;
 
         // Safe localStorage Helpers
         function safeGetStorage(key, fallback) {
@@ -7179,6 +7948,7 @@ How to play:
 
           populateCategorySelectors();
           renderAll();
+          initStudio();
           bindEvents();
         }
 
@@ -7207,6 +7977,740 @@ How to play:
           const cleaned = String(numOrStr).replace(/[^0-9]/g, "");
           const n = parseInt(cleaned, 10) || 1;
           return String(n).padStart(3, "0");
+        }
+
+        function getCategoryBadges(catName) {
+          const name = String(catName || "").toLowerCase();
+          if (name.includes("s vs. sh") || name.includes("s vs sh")) {
+            return {
+              leftBadge: "S",
+              leftTip: "Smiling lips, tongue tip behind upper teeth.",
+              rightBadge: "SH",
+              rightTip: "Rounded lips, pull tongue blade slightly back."
+            };
+          }
+          if (name.includes("v vs. w") || name.includes("v vs w")) {
+            return {
+              leftBadge: "V",
+              leftTip: "Upper teeth gently touch lower lip and vibrate.",
+              rightBadge: "W",
+              rightTip: "Round lips tightly into a small circle, no teeth."
+            };
+          }
+          if (name.includes("ch vs. sh") || name.includes("ch vs sh")) {
+            return {
+              leftBadge: "CH",
+              leftTip: "Tongue taps ridge behind upper teeth; crisp burst.",
+              rightBadge: "SH",
+              rightTip: "Continuous smooth airflow; do not stop air first."
+            };
+          }
+          if (name.includes("th")) {
+            return {
+              leftBadge: "S",
+              leftTip: "Keep tongue tip behind teeth; crisp hissing air.",
+              rightBadge: "TH",
+              rightTip: "Flat tongue tip lightly between teeth; blow softly."
+            };
+          }
+          if (name.includes("z vs")) {
+            return {
+              leftBadge: "Z",
+              leftTip: "Steady vocal buzz with tongue near tooth ridge.",
+              rightBadge: "J",
+              rightTip: "Firm stop-release behind ridge; avoid hissing."
+            };
+          }
+          if (name.includes("p vs") || name.includes("b vs")) {
+            return {
+              leftBadge: "P/B",
+              leftTip: "Seal both lips completely before explosive release.",
+              rightBadge: "F/V",
+              rightTip: "Rest upper teeth on lower lip wet line for continuous flow."
+            };
+          }
+          if (name.includes("r vs. l") || name.includes("r vs l")) {
+            return {
+              leftBadge: "L",
+              leftTip: "Press tongue tip firmly against gum ridge behind teeth.",
+              rightBadge: "R",
+              rightTip: "Curl or bunch tongue in mid-mouth; tip touches nothing."
+            };
+          }
+          if (name.includes("cluster") || name.includes("ending")) {
+            return {
+              leftBadge: "-STS",
+              leftTip: "Slow final 20%; articulate each consonant in sequence.",
+              rightBadge: "-KTS",
+              rightTip: "Do not drop middle stop or insert extra vowels."
+            };
+          }
+          if (name.includes("vowel")) {
+            return {
+              leftBadge: "SHORT",
+              leftTip: "Relax jaw and tongue for short lax vowels.",
+              rightBadge: "LONG",
+              rightTip: "Tense lip corners and extend duration cleanly."
+            };
+          }
+          const meta = getCategoryMeta(catName);
+          const parts = String(catName || "").split(/vs\.?|\/|&/i).map(s => s.trim().toUpperCase());
+          return {
+            leftBadge: (parts[0] || "SLOW").slice(0, 5),
+            leftTip: meta.tip.split(".")[0] + ".",
+            rightBadge: (parts[1] || "CLEAR").slice(0, 5),
+            rightTip: meta.tip.split(".").slice(1).join(".").trim() || "Articulate every sound with full clarity."
+          };
+        }
+
+        function autoHighlightText(rawText, leftSound, rightSound) {
+          const clean = String(rawText || "")
+            .replace(/\[([^\]]+)\]/g, "$1")
+            .replace(/\{([^}]+)\}/g, "$1")
+            .replace(/_([^_]+)_/g, "$1");
+
+          const stopWords = new Set([
+            "is", "as", "was", "his", "has", "this", "us", "its", "the", "to", "in", "on", "and", "for", "of", "with", "by", "a", "an", "at", "it", "or", "so"
+          ]);
+          const lBadge = (leftSound || "S").trim().toUpperCase();
+          const rBadge = (rightSound || "SH").trim().toUpperCase();
+
+          return clean
+            .split("\n")
+            .map((line) => {
+              line = line.replace(/^\s*0?[1-9]\s*[:.-]?\s*/, "");
+              return line
+                .split(/(\s+)/)
+                .map((token) => {
+                  if (/^\s+$/.test(token) || !token) return token;
+                  const match = token.match(/^([^a-zA-Z0-9]*)([a-zA-Z0-9'-]+)([^a-zA-Z0-9]*)$/);
+                  if (!match) return token;
+                  const [, prefix, word, suffix] = match;
+                  const lower = word.toLowerCase();
+
+                  if (stopWords.has(lower)) return token;
+
+                  if (lBadge === "S" && rBadge === "SH") {
+                    if (lower.includes("sh") || lower === "she" || lower === "sure" || lower === "surely") return `${prefix}[${word}]${suffix}`;
+                    if (lower.startsWith("s") || lower.includes("ss")) return `${prefix}{${word}}${suffix}`;
+                  } else if (lBadge === "V" && rBadge === "W") {
+                    if (lower.startsWith("w") || lower.includes("wh")) return `${prefix}[${word}]${suffix}`;
+                    if (lower.startsWith("v") || lower.includes("vv")) return `${prefix}{${word}}${suffix}`;
+                  } else if ((lBadge === "S" || lBadge === "TH") && (rBadge === "TH" || rBadge === "S")) {
+                    if (lower.includes("th")) return `${prefix}[${word}]${suffix}`;
+                    if (lower.startsWith("s") || lower.includes("ss")) return `${prefix}{${word}}${suffix}`;
+                  } else if (lBadge === "L" && rBadge === "R") {
+                    if (lower.startsWith("r") || lower.includes("rr")) return `${prefix}[${word}]${suffix}`;
+                    if (lower.startsWith("l") || lower.includes("ll")) return `${prefix}{${word}}${suffix}`;
+                  } else {
+                    const rLow = rBadge.toLowerCase();
+                    const lLow = lBadge.toLowerCase();
+                    if (rLow && lower.includes(rLow)) return `${prefix}[${word}]${suffix}`;
+                    if (lLow && (lower.startsWith(lLow) || lower.includes(lLow))) return `${prefix}{${word}}${suffix}`;
+                  }
+                  return token;
+                })
+                .join("");
+            })
+            .join("\n");
+        }
+
+        function parseLineTokens(lineText) {
+          const cleaned = String(lineText || "").trim().replace(/^\s*0?[1-5]\s*[:.-]?\s*/, "");
+          if (!cleaned) return [];
+          return cleaned.split(/\s+/).map((raw) => {
+            const pillMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)\[([^\]]+)\]([^a-zA-Z0-9\}\]\']*)$/);
+            if (pillMatch) {
+              return { prefix: pillMatch[1], text: pillMatch[2], suffix: pillMatch[3], type: "pill" };
+            }
+            const underMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)[\{_]([^\}\_]+)[\}_]([^a-zA-Z0-9\}\]\']*)$/);
+            if (underMatch) {
+              return { prefix: underMatch[1], text: underMatch[2], suffix: underMatch[3], type: "underline" };
+            }
+            return { prefix: "", text: raw, suffix: "", type: "normal" };
+          });
+        }
+
+        function renderStudioCard(hideScript = false) {
+          const workoutBadgeInput = document.getElementById("studioWorkoutBadgeInput");
+          const categoryInput = document.getElementById("studioCategoryInput");
+          const hookInput = document.getElementById("studioHookInput");
+          const leftBadgeInput = document.getElementById("studioLeftBadgeInput");
+          const leftTipInput = document.getElementById("studioLeftTipInput");
+          const rightBadgeInput = document.getElementById("studioRightBadgeInput");
+          const rightTipInput = document.getElementById("studioRightTipInput");
+          const footerLine1Input = document.getElementById("studioFooterLine1Input");
+          const footerLine2Input = document.getElementById("studioFooterLine2Input");
+
+          const domWorkoutBadge = document.getElementById("domWorkoutBadge");
+          const domCategoryBadge = document.getElementById("domCategoryBadge");
+          const domHookText = document.getElementById("domHookText");
+          const domLeftBadge = document.getElementById("domLeftBadge");
+          const domLeftTip = document.getElementById("domLeftTip");
+          const domRightBadge = document.getElementById("domRightBadge");
+          const domRightTip = document.getElementById("domRightTip");
+          const domFooterLine1 = document.getElementById("domFooterLine1");
+          const domFooterLine2 = document.getElementById("domFooterLine2");
+          const scriptContainer = document.getElementById("domScriptLines");
+
+          if (!domWorkoutBadge || !scriptContainer) return;
+
+          domWorkoutBadge.textContent = (workoutBadgeInput ? workoutBadgeInput.value : "DAILY VOCAL WORKOUT").toUpperCase();
+          domCategoryBadge.textContent = (categoryInput ? categoryInput.value : "CATEGORY 01 • S vs. SH").toUpperCase();
+          domHookText.textContent = hookInput ? hookInput.value : "";
+
+          domLeftBadge.textContent = leftBadgeInput ? leftBadgeInput.value : "S";
+          domLeftTip.textContent = leftTipInput ? leftTipInput.value : "";
+          domRightBadge.textContent = rightBadgeInput ? rightBadgeInput.value : "SH";
+          domRightTip.textContent = rightTipInput ? rightTipInput.value : "";
+
+          domFooterLine1.textContent = footerLine1Input ? footerLine1Input.value : "🎙️ Send a voice note, don't kill the fun.";
+          domFooterLine2.textContent = footerLine2Input ? footerLine2Input.value : "Follow @TheSlowEnglish";
+
+          scriptContainer.innerHTML = "";
+          if (hideScript) return;
+
+          const rawLines = (document.getElementById("studioScriptInput").value || "").split("\n").slice(0, 5);
+          const maxChars = Math.max(...rawLines.map((l) => l.replace(/[\[\]\{\}_]/g, "").length), 24);
+          let fontSize = 52;
+          if (maxChars > 34) fontSize = 44;
+          else if (maxChars > 30) fontSize = 48;
+
+          rawLines.forEach((lineStr, lineIdx) => {
+            const rowDiv = document.createElement("div");
+            rowDiv.style.display = "flex";
+            rowDiv.style.alignItems = "center";
+            rowDiv.style.justifyContent = "flex-start";
+            rowDiv.style.gap = `${Math.round(fontSize * 0.26)}px`;
+            rowDiv.style.fontSize = `${fontSize}px`;
+            rowDiv.style.fontWeight = "800";
+            rowDiv.style.color = "#14110F";
+            rowDiv.style.letterSpacing = "-0.02em";
+            rowDiv.style.lineHeight = "1.25";
+            rowDiv.style.whiteSpace = "nowrap";
+
+            const tokens = parseLineTokens(lineStr);
+            tokens.forEach((tk, tokenIdx) => {
+              const tokenWrap = document.createElement("span");
+              tokenWrap.className = "interactive-word";
+              tokenWrap.title = "Click to cycle: Gold Underline → Red Pill → Plain";
+              tokenWrap.onclick = () => cycleWordStyle(lineIdx, tokenIdx);
+              tokenWrap.style.display = "inline-flex";
+              tokenWrap.style.alignItems = "center";
+              tokenWrap.style.position = "relative";
+
+              if (tk.prefix) {
+                const pre = document.createElement("span");
+                pre.textContent = tk.prefix;
+                tokenWrap.appendChild(pre);
+              }
+
+              if (tk.type === "pill") {
+                const pill = document.createElement("span");
+                pill.textContent = tk.text;
+                pill.style.backgroundColor = "#C84326";
+                pill.style.color = "#FAF6F0";
+                pill.style.height = `${Math.round(fontSize * 1.32)}px`;
+                pill.style.padding = "0 22px";
+                pill.style.borderRadius = "999px";
+                pill.style.display = "inline-flex";
+                pill.style.alignItems = "center";
+                pill.style.justifyContent = "center";
+                pill.style.lineHeight = "1";
+                pill.style.boxSizing = "border-box";
+                tokenWrap.appendChild(pill);
+              } else if (tk.type === "underline") {
+                const under = document.createElement("span");
+                under.style.display = "inline-block";
+                under.style.position = "relative";
+                under.style.paddingBottom = "14px";
+                under.style.marginBottom = "-14px";
+
+                const textSpan = document.createElement("span");
+                textSpan.textContent = tk.text;
+                under.appendChild(textSpan);
+
+                const bar = document.createElement("span");
+                bar.style.position = "absolute";
+                bar.style.bottom = "0";
+                bar.style.left = "0";
+                bar.style.width = "100%";
+                bar.style.height = "8px";
+                bar.style.backgroundColor = "#D99B26";
+                bar.style.borderRadius = "4px";
+                under.appendChild(bar);
+
+                tokenWrap.appendChild(under);
+              } else {
+                const normal = document.createElement("span");
+                normal.textContent = tk.text;
+                tokenWrap.appendChild(normal);
+              }
+
+              if (tk.suffix) {
+                const suf = document.createElement("span");
+                suf.textContent = tk.suffix;
+                suf.style.marginLeft = "1px";
+                tokenWrap.appendChild(suf);
+              }
+
+              rowDiv.appendChild(tokenWrap);
+            });
+
+            scriptContainer.appendChild(rowDiv);
+          });
+        }
+
+        function cycleWordStyle(lineIdx, tokenIdx) {
+          const el = document.getElementById("studioScriptInput");
+          if (!el) return;
+          const lines = el.value.split("\n");
+          if (!lines[lineIdx]) return;
+
+          const cleanedLine = lines[lineIdx].trim().replace(/^\s*0?[1-5]\s*[:.-]?\s*/, "");
+          const tokens = cleanedLine.split(/\s+/);
+          if (tokenIdx < 0 || tokenIdx >= tokens.length) return;
+
+          const raw = tokens[tokenIdx];
+          const pillMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)\[([^\]]+)\]([^a-zA-Z0-9\}\]\']*)$/);
+          const goldMatch = raw.match(/^([^a-zA-Z0-9\{\[\_]*)[\{_]([^\}\_]+)[\}_]([^a-zA-Z0-9\}\]\']*)$/);
+          const plainMatch = raw.match(/^([^a-zA-Z0-9]*)([a-zA-Z0-9'-]+)([^a-zA-Z0-9]*)$/);
+
+          if (goldMatch) {
+            tokens[tokenIdx] = `${goldMatch[1]}[${goldMatch[2]}]${goldMatch[3]}`;
+          } else if (pillMatch) {
+            tokens[tokenIdx] = `${pillMatch[1]}${pillMatch[2]}${pillMatch[3]}`;
+          } else if (plainMatch) {
+            tokens[tokenIdx] = `${plainMatch[1]}{${plainMatch[2]}}${plainMatch[3]}`;
+          }
+
+          lines[lineIdx] = tokens.join(" ");
+          el.value = lines.join("\n");
+          renderStudioCard();
+        }
+
+        function loadStudioScript(scriptIdOrIndex) {
+          let scriptObj;
+          if (typeof scriptIdOrIndex === "string") {
+            scriptObj = scripts.find((s) => s.id === scriptIdOrIndex);
+          } else if (typeof scriptIdOrIndex === "number") {
+            scriptObj = studioFilteredList[scriptIdOrIndex] || scripts[scriptIdOrIndex];
+          }
+          if (!scriptObj) {
+            scriptObj = scripts[0];
+          }
+          if (!scriptObj) return;
+
+          const fullIdx = scripts.findIndex((s) => s.id === scriptObj.id);
+          studioActiveIndex = fullIdx >= 0 ? fullIdx : 0;
+
+          const badges = getCategoryBadges(scriptObj.category);
+          const catNum = String(SOUND_CATEGORIES.findIndex((c) => c.id === scriptObj.category) + 1).padStart(2, "0");
+
+          const catInput = document.getElementById("studioCategoryInput");
+          if (catInput) catInput.value = `CATEGORY ${catNum} • ${scriptObj.category}`;
+
+          let hookText = scriptObj.hook || "Do you speak English fluently?\nThen try this without pausing:";
+          if (!hookText.includes("\n")) {
+            const splitIdx = hookText.indexOf("? ");
+            if (splitIdx > 0) {
+              hookText = hookText.slice(0, splitIdx + 1) + "\n" + hookText.slice(splitIdx + 2);
+            } else {
+              const periodIdx = hookText.indexOf(". ");
+              if (periodIdx > 0) {
+                hookText = hookText.slice(0, periodIdx + 1) + "\n" + hookText.slice(periodIdx + 2);
+              }
+            }
+          }
+          const hookInput = document.getElementById("studioHookInput");
+          if (hookInput) hookInput.value = hookText;
+
+          let rawScript = (scriptObj.lines || []).join("\n");
+          if (scriptObj.id === "001") {
+            rawScript = "If {six} [shy] {sailors} {sold}\n{seven} [shiny] {silver} [shirts],\nwhich [shy] {sailor} would {sell}\nthe [sharpest] {silver} [shirt] first,\nand which [shirt] would [she] {see}?";
+          } else if (!rawScript.includes("[") && !rawScript.includes("{")) {
+            rawScript = autoHighlightText(rawScript, badges.leftBadge, badges.rightBadge);
+          }
+          const scriptInput = document.getElementById("studioScriptInput");
+          if (scriptInput) scriptInput.value = rawScript;
+
+          const leftBadgeInput = document.getElementById("studioLeftBadgeInput");
+          const leftTipInput = document.getElementById("studioLeftTipInput");
+          const rightBadgeInput = document.getElementById("studioRightBadgeInput");
+          const rightTipInput = document.getElementById("studioRightTipInput");
+
+          if (leftBadgeInput) leftBadgeInput.value = badges.leftBadge;
+          if (leftTipInput) leftTipInput.value = badges.leftTip;
+          if (rightBadgeInput) rightBadgeInput.value = badges.rightBadge;
+          if (rightTipInput) rightTipInput.value = badges.rightTip;
+
+          const counter = document.getElementById("studioQueueCounter");
+          if (counter) counter.textContent = `Script #${scriptObj.id} (${studioActiveIndex + 1} of ${scripts.length})`;
+
+          const scriptSelect = document.getElementById("studioScriptSelect");
+          if (scriptSelect) scriptSelect.value = scriptObj.id;
+
+          renderStudioCard();
+          updatePreviewScale();
+        }
+
+        function refreshStudioDropdowns() {
+          const catSelect = document.getElementById("studioCategoryFilter");
+          const scriptSelect = document.getElementById("studioScriptSelect");
+          if (!catSelect || !scriptSelect) return;
+
+          if (catSelect.options.length <= 1) {
+            catSelect.innerHTML = '<option value="ALL">All 16 Categories (400 Scripts)</option>';
+            SOUND_CATEGORIES.forEach((cat, idx) => {
+              const count = scripts.filter((s) => s.category === cat.id).length;
+              const opt = document.createElement("option");
+              opt.value = cat.id;
+              opt.textContent = `${idx + 1}. ${cat.name} (${count})`;
+              catSelect.appendChild(opt);
+            });
+          }
+
+          const activeCat = catSelect.value;
+          studioFilteredList = activeCat === "ALL"
+            ? scripts
+            : scripts.filter((s) => s.category === activeCat);
+
+          scriptSelect.innerHTML = "";
+          studioFilteredList.forEach((s) => {
+            const opt = document.createElement("option");
+            opt.value = s.id;
+            const firstLine = (s.lines[0] || "").replace(/[\[\]\{\}_]/g, "").slice(0, 32);
+            opt.textContent = `#${s.id} [${s.category}] — ${firstLine}...`;
+            if (scripts[studioActiveIndex] && s.id === scripts[studioActiveIndex].id) {
+              opt.selected = true;
+            }
+            scriptSelect.appendChild(opt);
+          });
+        }
+
+        function makeStudioTemporarilyVisible() {
+          const studioView = document.getElementById("studioView");
+          if (!studioView || !studioView.classList.contains("hidden")) {
+            return null;
+          }
+          const prevDisplay = studioView.style.display;
+          const prevPosition = studioView.style.position;
+          const prevLeft = studioView.style.left;
+          const prevTop = studioView.style.top;
+          const prevZIndex = studioView.style.zIndex;
+          const prevVisibility = studioView.style.visibility;
+
+          studioView.style.display = "flex";
+          studioView.style.position = "fixed";
+          studioView.style.left = "-99999px";
+          studioView.style.top = "0";
+          studioView.style.zIndex = "-9999";
+          studioView.style.visibility = "visible";
+          studioView.classList.remove("hidden");
+
+          return () => {
+            studioView.classList.add("hidden");
+            studioView.style.display = prevDisplay;
+            studioView.style.position = prevPosition;
+            studioView.style.left = prevLeft;
+            studioView.style.top = prevTop;
+            studioView.style.zIndex = prevZIndex;
+            studioView.style.visibility = prevVisibility;
+          };
+        }
+
+        function updatePreviewScale() {
+          const viewport = document.getElementById("previewViewport");
+          const master = document.getElementById("reelCardMaster");
+          if (!viewport || !master) return;
+          const scale = viewport.clientWidth / 1080;
+          master.style.transform = `scale(${scale})`;
+        }
+
+        async function captureCardPNG(filenamePrefix) {
+          const master = document.getElementById("reelCardMaster");
+          if (!master) return null;
+          const restoreVisibility = makeStudioTemporarilyVisible();
+          const prevTransform = master.style.transform;
+          master.style.transform = "none";
+
+          try {
+            if (document.fonts && document.fonts.ready) {
+              await document.fonts.ready;
+            }
+            const canvas = await html2canvas(master, {
+              width: 1080,
+              height: 1920,
+              scale: 1,
+              windowWidth: 1080,
+              windowHeight: 1920,
+              scrollX: 0,
+              scrollY: 0,
+              backgroundColor: "#F5EFE6",
+              useCORS: true,
+              logging: false,
+            });
+
+            const dataUrl = canvas.toDataURL("image/png", 1.0);
+            const link = document.createElement("a");
+            link.download = `${filenamePrefix}-1080x1920.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return canvas;
+          } finally {
+            master.style.transform = prevTransform;
+            if (restoreVisibility) restoreVisibility();
+          }
+        }
+
+        async function batchDownloadPNGs(useZip = true) {
+          const targets = selectedScriptIds.size > 0
+            ? scripts.filter((s) => selectedScriptIds.has(s.id))
+            : scripts;
+
+          if (targets.length === 0) {
+            showToast("⚠️ No scripts selected for batch export.", "⚠️");
+            return;
+          }
+
+          const progressModal = document.getElementById("batchProgressModal");
+          const progressFill = document.getElementById("batchProgressBarFill");
+          const progressSubtitle = document.getElementById("batchProgressSubtitle");
+          const progressText = document.getElementById("batchProgressText");
+          const progressPercent = document.getElementById("batchProgressPercent");
+
+          progressModal.classList.remove("hidden");
+          progressModal.classList.add("flex");
+          isBatchCancelled = false;
+
+          const restoreVisibility = makeStudioTemporarilyVisible();
+
+          try {
+            if (document.fonts && document.fonts.ready) {
+              await document.fonts.ready;
+            }
+
+            let zipInstance = useZip && typeof JSZip !== "undefined" ? new JSZip() : null;
+            const savedIndex = studioActiveIndex;
+
+            for (let i = 0; i < targets.length; i++) {
+              if (isBatchCancelled) {
+                showToast("Batch export cancelled.", "🛑");
+                break;
+              }
+
+              const script = targets[i];
+              loadStudioScript(script.id);
+              await new Promise((r) => setTimeout(r, 60));
+
+              const pct = Math.round(((i + 1) / targets.length) * 100);
+              progressFill.style.width = `${pct}%`;
+              progressSubtitle.textContent = `Rendering #${script.id} (${script.category}): "${(script.lines[0] || "").slice(0, 32)}..."`;
+              progressText.textContent = `${i + 1} / ${targets.length} Cards`;
+              progressPercent.textContent = `${pct}%`;
+
+              const slug = (script.lines[0] || `twister-${script.id}`)
+                .replace(/[\[\]\{\}_]/g, "")
+                .replace(/[^a-zA-Z0-9]+/g, "-")
+                .toLowerCase()
+                .replace(/^-|-$/g, "")
+                .slice(0, 30);
+              const filename = `reel-${script.id}-${slug}-1080x1920.png`;
+
+              if (zipInstance) {
+                const master = document.getElementById("reelCardMaster");
+                const prevTransform = master.style.transform;
+                master.style.transform = "none";
+                try {
+                  const canvas = await html2canvas(master, {
+                    width: 1080,
+                    height: 1920,
+                    scale: 1,
+                    windowWidth: 1080,
+                    windowHeight: 1920,
+                    scrollX: 0,
+                    scrollY: 0,
+                    backgroundColor: "#F5EFE6",
+                    useCORS: true,
+                    logging: false,
+                  });
+                  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+                  zipInstance.file(filename, blob);
+                } finally {
+                  master.style.transform = prevTransform;
+                }
+              } else {
+                await captureCardPNG(`reel-${script.id}-${slug}`);
+                await new Promise((r) => setTimeout(r, 120));
+              }
+            }
+
+            if (!isBatchCancelled && zipInstance) {
+              progressSubtitle.textContent = "Compressing into ZIP archive...";
+              const zipBlob = await zipInstance.generateAsync({ type: "blob" });
+              const link = document.createElement("a");
+              link.download = `TheSlowEnglish-Reels-Batch-${targets.length}-PNGs.zip`;
+              link.href = URL.createObjectURL(zipBlob);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              showToast(`📦 Downloaded ${targets.length} Reel PNGs in ZIP!`, "✅");
+            }
+          } finally {
+            if (restoreVisibility) restoreVisibility();
+            progressModal.classList.add("hidden");
+            progressModal.classList.remove("flex");
+            if (scripts[savedIndex]) {
+              loadStudioScript(scripts[savedIndex].id);
+            }
+          }
+        }
+
+        function switchView(viewName) {
+          currentView = viewName;
+          const dashView = document.getElementById("dashboardView");
+          const studioView = document.getElementById("studioView");
+          const ebookView = document.getElementById("ebookView");
+
+          const btnNavDashboard = document.getElementById("btnNavDashboard");
+          const btnNavStudio = document.getElementById("btnNavStudio");
+          const btnToggleEbookMode = document.getElementById("btnToggleEbookMode");
+
+          if (viewName === "studio") {
+            dashView.classList.add("hidden");
+            ebookView.classList.add("hidden");
+            studioView.classList.remove("hidden");
+
+            btnNavStudio.classList.add("bg-espresso", "text-parchment", "font-bold");
+            btnNavStudio.classList.remove("text-ink", "dark:text-parchment");
+
+            btnNavDashboard.classList.remove("bg-espresso", "text-parchment", "font-bold");
+            btnNavDashboard.classList.add("text-ink", "dark:text-parchment");
+
+            btnToggleEbookMode.classList.remove("bg-espresso", "text-parchment", "font-bold");
+            btnToggleEbookMode.classList.add("text-ink", "dark:text-parchment");
+
+            refreshStudioDropdowns();
+            loadStudioScript(studioActiveIndex);
+            updatePreviewScale();
+          } else if (viewName === "ebook") {
+            dashView.classList.add("hidden");
+            studioView.classList.add("hidden");
+            ebookView.classList.remove("hidden");
+
+            btnToggleEbookMode.classList.add("bg-espresso", "text-parchment", "font-bold");
+            btnToggleEbookMode.classList.remove("text-ink", "dark:text-parchment");
+
+            btnNavDashboard.classList.remove("bg-espresso", "text-parchment", "font-bold");
+            btnNavDashboard.classList.add("text-ink", "dark:text-parchment");
+
+            btnNavStudio.classList.remove("bg-espresso", "text-parchment", "font-bold");
+            btnNavStudio.classList.add("text-ink", "dark:text-parchment");
+
+            renderEbookView();
+          } else {
+            studioView.classList.add("hidden");
+            ebookView.classList.add("hidden");
+            dashView.classList.remove("hidden");
+
+            btnNavDashboard.classList.add("bg-espresso", "text-parchment", "font-bold");
+            btnNavDashboard.classList.remove("text-ink", "dark:text-parchment");
+
+            btnNavStudio.classList.remove("bg-espresso", "text-parchment", "font-bold");
+            btnNavStudio.classList.add("text-ink", "dark:text-parchment");
+
+            btnToggleEbookMode.classList.remove("bg-espresso", "text-parchment", "font-bold");
+            btnToggleEbookMode.classList.add("text-ink", "dark:text-parchment");
+
+            renderScriptsGrid();
+            renderTopStats();
+          }
+        }
+
+        function renderTwisterSelectModal() {
+          const listEl = document.getElementById("modalTwistersList");
+          const searchVal = (document.getElementById("inputModalTwisterSearch").value || "").trim().toLowerCase();
+          const catVal = document.getElementById("selectModalCategoryFilter").value;
+
+          const filtered = scripts.filter((s) => {
+            if (catVal !== "ALL" && s.category !== catVal) return false;
+            if (searchVal) {
+              const idMatch = `#${s.id}`.toLowerCase().includes(searchVal) || s.id.includes(searchVal);
+              const catMatch = s.category.toLowerCase().includes(searchVal);
+              const lineMatch = (s.lines || []).join(" ").toLowerCase().includes(searchVal);
+              return idMatch || catMatch || lineMatch;
+            }
+            return true;
+          });
+
+          listEl.innerHTML = filtered
+            .map((s) => {
+              const isSelected = selectedScriptIds.has(s.id);
+              const firstLine = (s.lines[0] || "").replace(/[\[\]\{\}_]/g, "");
+              return `
+              <label class="flex items-center justify-between p-2.5 rounded-xl bg-[#12100E] border ${
+                isSelected ? "border-[#DCA03A] bg-[#231F1B]" : "border-[#2E2924]"
+              } hover:border-[#DCA03A]/60 transition cursor-pointer select-none">
+                <div class="flex items-center gap-3">
+                  <input type="checkbox" class="modal-script-cb w-4 h-4 rounded text-espresso accent-[#C84326]" data-id="${escapeHtml(
+                    s.id,
+                  )}" ${isSelected ? "checked" : ""}>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono text-xs font-bold text-[#DCA03A]">#${escapeHtml(s.id)}</span>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-[#28231E] text-[#D5CFC4] border border-[#3A332C]">${escapeHtml(
+                        s.category,
+                      )}</span>
+                    </div>
+                    <p class="text-xs text-[#F6F2EA] mt-0.5">${escapeHtml(firstLine)}...</p>
+                  </div>
+                </div>
+                <button type="button" class="btn-quick-preview-studio px-2 py-1 text-[11px] text-[#A39B8F] hover:text-[#DCA03A] border border-[#3A332C] rounded-lg cursor-pointer" data-id="${escapeHtml(
+                  s.id,
+                )}">
+                  View in Studio →
+                </button>
+              </label>
+              `;
+            })
+            .join("");
+
+          updateSelectionCounters();
+        }
+
+        function updateSelectionCounters() {
+          const count = selectedScriptIds.size;
+          const modalBadge = document.getElementById("modalSelectionSummary");
+          if (modalBadge) modalBadge.textContent = `${count} of ${scripts.length} Selected`;
+
+          const dashBadge = document.getElementById("bulkSelectedBadge");
+          if (dashBadge) dashBadge.textContent = `${count} Selected`;
+
+          const studioBadge = document.getElementById("studioBatchBadge");
+          if (studioBadge) studioBadge.textContent = String(count > 0 ? count : scripts.length);
+
+          const cbAll = document.getElementById("cbSelectAllFiltered");
+          if (cbAll) {
+            const filtered = getFilteredScripts();
+            cbAll.checked = filtered.length > 0 && filtered.every((s) => selectedScriptIds.has(s.id));
+          }
+        }
+
+        function initStudio() {
+          refreshStudioDropdowns();
+          const catFilterModal = document.getElementById("selectModalCategoryFilter");
+          if (catFilterModal && catFilterModal.options.length <= 1) {
+            SOUND_CATEGORIES.forEach((cat) => {
+              const opt = document.createElement("option");
+              opt.value = cat.id;
+              opt.textContent = cat.name;
+              catFilterModal.appendChild(opt);
+            });
+          }
+          loadStudioScript(0);
+          updatePreviewScale();
         }
 
         // Populate Category Dropdown & Horizontal Chips
@@ -7392,6 +8896,7 @@ How to play:
           if (filtered.length === 0) {
             gridEl.innerHTML = "";
             emptyEl.classList.remove("hidden");
+            updateSelectionCounters();
             return;
           }
           emptyEl.classList.add("hidden");
@@ -7399,6 +8904,7 @@ How to play:
           gridEl.innerHTML = filtered
             .map((item) => {
               const meta = getCategoryMeta(item.category);
+              const isSelected = selectedScriptIds.has(item.id);
               const statusBadge = item.posted
                 ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sagePosted/15 text-sagePosted dark:bg-emerald-500/20 dark:text-emerald-300 border border-sagePosted/30">
                    Posted ✅ on ${escapeHtml(item.postedAt || "Today")}
@@ -7426,15 +8932,25 @@ How to play:
 
               return `
               <article id="script-card-${escapeHtml(item.id)}" class="bg-parchmentCard dark:bg-darkCard border ${
-                item.posted
+                isSelected
+                  ? "border-[#C84326] ring-1 ring-[#C84326]"
+                  : item.posted
                   ? "border-sagePosted/50 dark:border-emerald-500/40"
                   : "border-[#DFD5C5] dark:border-darkBorder"
               } rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4">
 
-                <!-- Top Card Header: Badge with Index (#001), Category Name, and Posted Status -->
+                <!-- Top Card Header: Checkbox + Badge + Category Name + Posted Status -->
                 <div class="space-y-2">
                   <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
+                      <label class="flex items-center cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          class="dash-script-cb w-4 h-4 rounded text-espresso accent-[#C84326] cursor-pointer"
+                          data-id="${escapeHtml(item.id)}"
+                          ${isSelected ? "checked" : ""}
+                        />
+                      </label>
                       <span class="px-2.5 py-1 rounded-lg font-display text-xs font-bold bg-espresso text-parchment">
                         #${escapeHtml(item.id)}
                       </span>
@@ -7479,22 +8995,42 @@ How to play:
 
                 <!-- Action Buttons Bar -->
                 <div class="space-y-2 pt-1">
+                  <!-- Quick Studio & PNG Export Buttons -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      data-action="open-studio"
+                      data-id="${escapeHtml(item.id)}"
+                      class="px-2.5 py-2 rounded-xl text-xs font-bold bg-[#C84326] hover:bg-[#b0381e] text-white shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>📸 Open in Studio</span>
+                    </button>
+                    <button
+                      type="button"
+                      data-action="download-png"
+                      data-id="${escapeHtml(item.id)}"
+                      class="px-2.5 py-2 rounded-xl text-xs font-bold bg-parchment dark:bg-darkBg border border-[#D5C7B4] dark:border-darkBorder text-ink dark:text-parchment hover:border-[#C84326] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span>⬇️ 1-Click PNG</span>
+                    </button>
+                  </div>
+
                   <div class="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       data-action="copy-script"
                       data-id="${escapeHtml(item.id)}"
-                      class="px-3 py-2.5 rounded-xl text-xs font-bold bg-espresso hover:bg-espressoDark text-parchment shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      class="px-3 py-2 rounded-xl text-xs font-bold bg-espresso hover:bg-espressoDark text-parchment shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <span>📋 Copy Reel Script</span>
+                      <span>📋 Copy Script</span>
                     </button>
                     <button
                       type="button"
                       data-action="copy-caption"
                       data-id="${escapeHtml(item.id)}"
-                      class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-parchment dark:bg-darkBg border border-[#D5C7B4] dark:border-darkBorder text-ink dark:text-parchment hover:border-espresso transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      class="px-3 py-2 rounded-xl text-xs font-semibold bg-parchment dark:bg-darkBg border border-[#D5C7B4] dark:border-darkBorder text-ink dark:text-parchment hover:border-espresso transition flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <span>📝 Copy Universal Caption</span>
+                      <span>📝 Copy Caption</span>
                     </button>
                   </div>
 
@@ -7502,7 +9038,7 @@ How to play:
                     type="button"
                     data-action="toggle-posted"
                     data-id="${escapeHtml(item.id)}"
-                    class="w-full py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    class="w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       item.posted
                         ? "bg-sagePosted text-white hover:opacity-90"
                         : "bg-parchment dark:bg-darkBg border border-espresso/40 text-espresso dark:text-goldAccent hover:bg-espresso hover:text-parchment"
@@ -7516,6 +9052,8 @@ How to play:
             `;
             })
             .join("");
+
+          updateSelectionCounters();
         }
 
         // 3. Render Option B: Master eBook Mode & PDF Layout
@@ -7860,41 +9398,357 @@ How to play:
 
         // Bind All Interactive Event Listeners
         function bindEvents() {
-          // 1. Switch between Option A (Dashboard) and Option B (eBook Mode)
+          // 1. Switch between Option A (Dashboard), Option B (eBook Mode), and Option C (Studio)
+          const btnNavDashboard = document.getElementById("btnNavDashboard");
+          const btnNavStudio = document.getElementById("btnNavStudio");
           const btnToggleEbook = document.getElementById("btnToggleEbookMode");
           const btnBackDashboard =
             document.getElementById("btnBackToDashboard");
           const btnPrintPdfNow = document.getElementById("btnPrintPdfNow");
 
-          function setViewMode(ebookActive) {
-            isEbookMode = ebookActive;
-            const dashEl = document.getElementById("dashboardView");
-            const ebookEl = document.getElementById("ebookView");
-            const labelEl = document.getElementById("ebookToggleLabel");
-            const iconEl = document.getElementById("ebookToggleIcon");
-
-            if (isEbookMode) {
-              dashEl.classList.add("hidden");
-              ebookEl.classList.remove("hidden");
-              labelEl.textContent = "Switch to Reel Dashboard";
-              iconEl.textContent = "📱";
-              renderEbookView();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            } else {
-              ebookEl.classList.add("hidden");
-              dashEl.classList.remove("hidden");
-              labelEl.textContent = "Switch to eBook Mode / Save as PDF";
-              iconEl.textContent = "📖";
-            }
+          if (btnNavDashboard) {
+            btnNavDashboard.addEventListener("click", () => switchView("dashboard"));
+          }
+          if (btnNavStudio) {
+            btnNavStudio.addEventListener("click", () => switchView("studio"));
+          }
+          if (btnToggleEbook) {
+            btnToggleEbook.addEventListener("click", () =>
+              switchView(currentView === "ebook" ? "dashboard" : "ebook"),
+            );
+          }
+          if (btnBackDashboard) {
+            btnBackDashboard.addEventListener("click", () => switchView("dashboard"));
+          }
+          if (btnPrintPdfNow) {
+            btnPrintPdfNow.addEventListener("click", () => {
+              window.print();
+            });
           }
 
-          btnToggleEbook.addEventListener("click", () =>
-            setViewMode(!isEbookMode),
-          );
-          btnBackDashboard.addEventListener("click", () => setViewMode(false));
-          btnPrintPdfNow.addEventListener("click", () => {
-            window.print();
+          // Bulk Selection Action Bar in Dashboard
+          const cbSelectAllFiltered = document.getElementById("cbSelectAllFiltered");
+          if (cbSelectAllFiltered) {
+            cbSelectAllFiltered.addEventListener("change", () => {
+              const filtered = getFilteredScripts();
+              if (cbSelectAllFiltered.checked) {
+                filtered.forEach((s) => selectedScriptIds.add(s.id));
+              } else {
+                filtered.forEach((s) => selectedScriptIds.delete(s.id));
+              }
+              renderScriptsGrid();
+            });
+          }
+
+          const btnBulkOpenStudio = document.getElementById("btnBulkOpenStudio");
+          if (btnBulkOpenStudio) {
+            btnBulkOpenStudio.addEventListener("click", () => {
+              if (selectedScriptIds.size > 0) {
+                const firstId = Array.from(selectedScriptIds)[0];
+                loadStudioScript(firstId);
+              }
+              switchView("studio");
+            });
+          }
+
+          const btnBulkExportZip = document.getElementById("btnBulkExportZip");
+          if (btnBulkExportZip) {
+            btnBulkExportZip.addEventListener("click", () => {
+              batchDownloadPNGs(true);
+            });
+          }
+
+          const btnBulkDeselect = document.getElementById("btnBulkDeselect");
+          if (btnBulkDeselect) {
+            btnBulkDeselect.addEventListener("click", () => {
+              selectedScriptIds.clear();
+              renderScriptsGrid();
+              updateSelectionCounters();
+            });
+          }
+
+          // Studio Controls
+          const btnStudioDownloadSingle = document.getElementById("btnStudioDownloadSingle");
+          if (btnStudioDownloadSingle) {
+            btnStudioDownloadSingle.addEventListener("click", async () => {
+              renderStudioCard(false);
+              const scriptInput = document.getElementById("studioScriptInput");
+              const firstLine = (scriptInput ? scriptInput.value : "slow-english-reel")
+                .split("\n")[0]
+                .replace(/[\[\]\{\}_]/g, "")
+                .replace(/[^a-zA-Z0-9]+/g, "-")
+                .toLowerCase()
+                .replace(/^-|-$/g, "")
+                .slice(0, 35);
+              showToast("⏳ Rendering crisp 1080×1920 PNG...", "⏳");
+              await captureCardPNG(firstLine || "slow-english-reel");
+              showToast("📸 Downloaded 1080×1920 Reel PNG!", "✅");
+            });
+          }
+
+          const btnStudioQuickSave = document.getElementById("btnStudioQuickSave");
+          if (btnStudioQuickSave) {
+            btnStudioQuickSave.addEventListener("click", () => {
+              if (btnStudioDownloadSingle) btnStudioDownloadSingle.click();
+            });
+          }
+
+          const btnStudioBatchExport = document.getElementById("btnStudioBatchExport");
+          if (btnStudioBatchExport) {
+            btnStudioBatchExport.addEventListener("click", () => {
+              batchDownloadPNGs(true);
+            });
+          }
+
+          const btnStudioBlankTemplate = document.getElementById("btnStudioBlankTemplate");
+          if (btnStudioBlankTemplate) {
+            btnStudioBlankTemplate.addEventListener("click", async () => {
+              renderStudioCard(true);
+              showToast("⏳ Rendering Blank 1080×1920 Template...", "⏳");
+              await captureCardPNG("slow-english-blank-template");
+              renderStudioCard(false);
+              showToast("🖼️ Downloaded Blank Template PNG!", "✅");
+            });
+          }
+
+          const btnStudioCopyCaption = document.getElementById("btnStudioCopyCaption");
+          if (btnStudioCopyCaption) {
+            btnStudioCopyCaption.addEventListener("click", () => {
+              const rawScript = (document.getElementById("studioScriptInput").value || "")
+                .replace(/\[([^\]]+)\]/g, "$1")
+                .replace(/\{([^}]+)\}/g, "$1")
+                .replace(/_([^_]+)_/g, "$1");
+              const hook = (document.getElementById("studioHookInput").value || "").replace(/\n/g, " ");
+              const caption = `${hook}\n\n${rawScript}\n\n📌 Follow @TheSlowEnglish for daily vocal workouts!`;
+              copyTextToClipboard(caption, "📋 Copied clean caption to clipboard!");
+            });
+          }
+
+          const btnStudioPrev = document.getElementById("btnStudioPrev");
+          if (btnStudioPrev) {
+            btnStudioPrev.addEventListener("click", () => {
+              const len = studioFilteredList.length || scripts.length;
+              const currentFilteredIdx = studioFilteredList.findIndex((s) => s.id === scripts[studioActiveIndex].id);
+              const prevIdx = (currentFilteredIdx - 1 + len) % len;
+              if (studioFilteredList[prevIdx]) {
+                loadStudioScript(studioFilteredList[prevIdx].id);
+              }
+            });
+          }
+
+          const btnStudioNext = document.getElementById("btnStudioNext");
+          if (btnStudioNext) {
+            btnStudioNext.addEventListener("click", () => {
+              const len = studioFilteredList.length || scripts.length;
+              const currentFilteredIdx = studioFilteredList.findIndex((s) => s.id === scripts[studioActiveIndex].id);
+              const nextIdx = (currentFilteredIdx + 1) % len;
+              if (studioFilteredList[nextIdx]) {
+                loadStudioScript(studioFilteredList[nextIdx].id);
+              }
+            });
+          }
+
+          const studioCategoryFilter = document.getElementById("studioCategoryFilter");
+          if (studioCategoryFilter) {
+            studioCategoryFilter.addEventListener("change", () => {
+              refreshStudioDropdowns();
+              if (studioFilteredList.length > 0) {
+                loadStudioScript(studioFilteredList[0].id);
+              }
+            });
+          }
+
+          const studioScriptSelect = document.getElementById("studioScriptSelect");
+          if (studioScriptSelect) {
+            studioScriptSelect.addEventListener("change", (e) => {
+              loadStudioScript(e.target.value);
+            });
+          }
+
+          const btnOpenTwisterSelectModal = document.getElementById("btnOpenTwisterSelectModal");
+          if (btnOpenTwisterSelectModal) {
+            btnOpenTwisterSelectModal.addEventListener("click", () => {
+              const modal = document.getElementById("twisterSelectModal");
+              renderTwisterSelectModal();
+              modal.classList.remove("hidden");
+              modal.classList.add("flex");
+            });
+          }
+
+          document.querySelectorAll("[data-cat-preset]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const catName = btn.dataset.catPreset;
+              const match = scripts.find((s) =>
+                s.category.toLowerCase().includes(catName.toLowerCase()) ||
+                catName.toLowerCase().includes(s.category.toLowerCase())
+              );
+              if (match) {
+                loadStudioScript(match.id);
+                showToast(`Switched to ${match.category}!`, "⚡");
+              }
+            });
           });
+
+          const btnStudioAutoHighlight = document.getElementById("btnStudioAutoHighlight");
+          if (btnStudioAutoHighlight) {
+            btnStudioAutoHighlight.addEventListener("click", () => {
+              const scriptInput = document.getElementById("studioScriptInput");
+              const lBadge = document.getElementById("studioLeftBadgeInput").value;
+              const rBadge = document.getElementById("studioRightBadgeInput").value;
+              scriptInput.value = autoHighlightText(scriptInput.value, lBadge, rBadge);
+              renderStudioCard();
+              showToast(`⚡ Auto-highlighted ${lBadge} & ${rBadge}!`, "⚡");
+            });
+          }
+
+          const btnStudioClearHighlights = document.getElementById("btnStudioClearHighlights");
+          if (btnStudioClearHighlights) {
+            btnStudioClearHighlights.addEventListener("click", () => {
+              const scriptInput = document.getElementById("studioScriptInput");
+              scriptInput.value = scriptInput.value
+                .replace(/\[([^\]]+)\]/g, "$1")
+                .replace(/\{([^}]+)\}/g, "$1")
+                .replace(/_([^_]+)_/g, "$1");
+              renderStudioCard();
+            });
+          }
+
+          [
+            "studioScriptInput",
+            "studioWorkoutBadgeInput",
+            "studioCategoryInput",
+            "studioHookInput",
+            "studioLeftBadgeInput",
+            "studioLeftTipInput",
+            "studioRightBadgeInput",
+            "studioRightTipInput",
+            "studioFooterLine1Input",
+            "studioFooterLine2Input",
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener("input", () => renderStudioCard());
+          });
+
+          // Twister Select Modal Events
+          const btnCloseTwisterModal = document.getElementById("btnCloseTwisterModal");
+          if (btnCloseTwisterModal) {
+            btnCloseTwisterModal.addEventListener("click", () => {
+              const modal = document.getElementById("twisterSelectModal");
+              modal.classList.add("hidden");
+              modal.classList.remove("flex");
+            });
+          }
+
+          const inputModalTwisterSearch = document.getElementById("inputModalTwisterSearch");
+          if (inputModalTwisterSearch) {
+            inputModalTwisterSearch.addEventListener("input", renderTwisterSelectModal);
+          }
+
+          const selectModalCategoryFilter = document.getElementById("selectModalCategoryFilter");
+          if (selectModalCategoryFilter) {
+            selectModalCategoryFilter.addEventListener("change", renderTwisterSelectModal);
+          }
+
+          const btnModalSelectAll = document.getElementById("btnModalSelectAll");
+          if (btnModalSelectAll) {
+            btnModalSelectAll.addEventListener("click", () => {
+              scripts.forEach((s) => selectedScriptIds.add(s.id));
+              renderTwisterSelectModal();
+              updateSelectionCounters();
+            });
+          }
+
+          const btnModalSelectVisible = document.getElementById("btnModalSelectVisible");
+          if (btnModalSelectVisible) {
+            btnModalSelectVisible.addEventListener("click", () => {
+              const catVal = document.getElementById("selectModalCategoryFilter").value;
+              const searchVal = (document.getElementById("inputModalTwisterSearch").value || "").trim().toLowerCase();
+              scripts.forEach((s) => {
+                if (catVal !== "ALL" && s.category !== catVal) return;
+                if (searchVal) {
+                  const idMatch = `#${s.id}`.toLowerCase().includes(searchVal) || s.id.includes(searchVal);
+                  const catMatch = s.category.toLowerCase().includes(searchVal);
+                  const lineMatch = (s.lines || []).join(" ").toLowerCase().includes(searchVal);
+                  if (!idMatch && !catMatch && !lineMatch) return;
+                }
+                selectedScriptIds.add(s.id);
+              });
+              renderTwisterSelectModal();
+              updateSelectionCounters();
+            });
+          }
+
+          const btnModalClearSelection = document.getElementById("btnModalClearSelection");
+          if (btnModalClearSelection) {
+            btnModalClearSelection.addEventListener("click", () => {
+              selectedScriptIds.clear();
+              renderTwisterSelectModal();
+              updateSelectionCounters();
+            });
+          }
+
+          const modalTwistersList = document.getElementById("modalTwistersList");
+          if (modalTwistersList) {
+            modalTwistersList.addEventListener("change", (e) => {
+              const cb = e.target.closest(".modal-script-cb");
+              if (!cb) return;
+              const id = cb.dataset.id;
+              if (cb.checked) {
+                selectedScriptIds.add(id);
+              } else {
+                selectedScriptIds.delete(id);
+              }
+              const parentLabel = cb.closest("label");
+              if (parentLabel) {
+                parentLabel.classList.toggle("border-[#DCA03A]", cb.checked);
+                parentLabel.classList.toggle("bg-[#231F1B]", cb.checked);
+                parentLabel.classList.toggle("border-[#2E2924]", !cb.checked);
+              }
+              updateSelectionCounters();
+            });
+
+            modalTwistersList.addEventListener("click", (e) => {
+              const btn = e.target.closest(".btn-quick-preview-studio");
+              if (!btn) return;
+              const id = btn.dataset.id;
+              loadStudioScript(id);
+              document.getElementById("twisterSelectModal").classList.add("hidden");
+              document.getElementById("twisterSelectModal").classList.remove("flex");
+              switchView("studio");
+            });
+          }
+
+          const btnModalLoadQueue = document.getElementById("btnModalLoadQueue");
+          if (btnModalLoadQueue) {
+            btnModalLoadQueue.addEventListener("click", () => {
+              document.getElementById("twisterSelectModal").classList.add("hidden");
+              document.getElementById("twisterSelectModal").classList.remove("flex");
+              if (selectedScriptIds.size > 0) {
+                const firstId = Array.from(selectedScriptIds)[0];
+                loadStudioScript(firstId);
+              }
+              switchView("studio");
+              showToast(`Queue active with ${selectedScriptIds.size} selected twisters!`, "🎯");
+            });
+          }
+
+          const btnModalDownloadZip = document.getElementById("btnModalDownloadZip");
+          if (btnModalDownloadZip) {
+            btnModalDownloadZip.addEventListener("click", () => {
+              document.getElementById("twisterSelectModal").classList.add("hidden");
+              document.getElementById("twisterSelectModal").classList.remove("flex");
+              batchDownloadPNGs(true);
+            });
+          }
+
+          const btnCancelBatchExport = document.getElementById("btnCancelBatchExport");
+          if (btnCancelBatchExport) {
+            btnCancelBatchExport.addEventListener("click", () => {
+              isBatchCancelled = true;
+            });
+          }
+
+          window.addEventListener("resize", updatePreviewScale);
 
           // 2. Dark Mode Toggle
           document
@@ -8006,7 +9860,7 @@ How to play:
               }
             });
 
-          // 6. Delegated Card Button Actions (Copy Reel Script, Copy Caption, Mark as Posted)
+          // 6. Delegated Card Button Actions (Open in Studio, Download PNG, Copy Reel Script, Copy Caption, Mark as Posted)
           document
             .getElementById("scriptsGrid")
             .addEventListener("click", (e) => {
@@ -8017,7 +9871,22 @@ How to play:
               const scriptItem = scripts.find((s) => s.id === id);
               if (!scriptItem) return;
 
-              if (action === "copy-script") {
+              if (action === "open-studio") {
+                loadStudioScript(id);
+                switchView("studio");
+              } else if (action === "download-png") {
+                loadStudioScript(id);
+                showToast(`Generating Reel #${id} PNG...`, "⏳");
+                const slug = (scriptItem.lines[0] || `twister-${id}`)
+                  .replace(/[\[\]\{\}_]/g, "")
+                  .replace(/[^a-zA-Z0-9]+/g, "-")
+                  .toLowerCase()
+                  .replace(/^-|-$/g, "")
+                  .slice(0, 30);
+                captureCardPNG(`reel-${id}-${slug}`).then(() => {
+                  showToast(`📸 Downloaded Reel #${id} PNG!`, "✅");
+                });
+              } else if (action === "copy-script") {
                 const canvaText = buildCanvaReelText(scriptItem);
                 copyTextToClipboard(
                   canvaText,
@@ -8059,6 +9928,27 @@ How to play:
                 safeSetStorage(STORAGE_KEY_SCRIPTS, scripts);
                 renderAll();
               }
+            });
+
+          // Checkbox selection in Dashboard Grid
+          document
+            .getElementById("scriptsGrid")
+            .addEventListener("change", (e) => {
+              const cb = e.target.closest(".dash-script-cb");
+              if (!cb) return;
+              const id = cb.dataset.id;
+              if (cb.checked) {
+                selectedScriptIds.add(id);
+              } else {
+                selectedScriptIds.delete(id);
+              }
+              const card = document.getElementById(`script-card-${id}`);
+              if (card) {
+                card.classList.toggle("border-[#C84326]", cb.checked);
+                card.classList.toggle("ring-1", cb.checked);
+                card.classList.toggle("ring-[#C84326]", cb.checked);
+              }
+              updateSelectionCounters();
             });
 
           // 7. eBook Student Checkbox persistence
