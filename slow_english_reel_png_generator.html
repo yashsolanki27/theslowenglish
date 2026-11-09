@@ -35,6 +35,11 @@
             background: #C84326;
         }
 
+        /* Critical fix for html2canvas FontMetrics baseline calculation (Tailwind Preflight conflict) */
+        img {
+            display: inline !important;
+        }
+
         /* Interactive word hover effect in Live Preview */
         .interactive-word {
             cursor: pointer;
@@ -797,7 +802,12 @@ Then try this without pausing:</div>
                     scrollY: 0,
                     backgroundColor: '#F5EFE6',
                     useCORS: true,
-                    logging: false
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        const s = clonedDoc.createElement('style');
+                        s.innerHTML = 'img { display: inline !important; }';
+                        clonedDoc.head.appendChild(s);
+                    }
                 });
 
                 const dataUrl = canvas.toDataURL('image/png', 1.0);

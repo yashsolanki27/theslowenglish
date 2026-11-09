@@ -99,6 +99,10 @@
         margin: 0 auto 0.35rem auto;
         opacity: 0.85;
       }
+      /* Critical fix for html2canvas FontMetrics baseline calculation (Tailwind Preflight conflict) */
+      img {
+        display: inline !important;
+      }
       /* Interactive word styling in Live 1080x1920 Reel Studio */
       .interactive-word {
         cursor: pointer;
@@ -8450,6 +8454,11 @@ How to play:
               backgroundColor: "#F5EFE6",
               useCORS: true,
               logging: false,
+              onclone: (clonedDoc) => {
+                const s = clonedDoc.createElement("style");
+                s.innerHTML = "img { display: inline !important; }";
+                clonedDoc.head.appendChild(s);
+              },
             });
 
             const dataUrl = canvas.toDataURL("image/png", 1.0);
@@ -8536,6 +8545,11 @@ How to play:
                     backgroundColor: "#F5EFE6",
                     useCORS: true,
                     logging: false,
+                    onclone: (clonedDoc) => {
+                      const s = clonedDoc.createElement("style");
+                      s.innerHTML = "img { display: inline !important; }";
+                      clonedDoc.head.appendChild(s);
+                    },
                   });
                   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
                   zipInstance.file(filename, blob);
