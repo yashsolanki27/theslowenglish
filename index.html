@@ -1720,8 +1720,11 @@ Then try this without pausing:
           >, and
           <code class="font-mono text-espresso dark:text-goldAccent"
             >{{HOOK}}</code
+          >, and
+          <code class="font-mono text-espresso dark:text-goldAccent"
+            >{{LINES}}</code
           >
-          placeholders to dynamically inject each Reel's metadata when you click
+          placeholders to dynamically inject each Reel's metadata with the top 5 high-engagement hashtags when you click
           <strong>"📝 Copy Universal Caption"</strong>.
         </p>
         <textarea
@@ -1874,20 +1877,22 @@ Then try this without pausing:
         const DEFAULT_FOOTER_CTA =
           "Send a voice note, don't kill the fun.\nFollow @TheSlowEnglish if you passed.";
 
-        const DEFAULT_UNIVERSAL_CAPTION = `Can you read all 5 lines clearly on your first try? 🎙️✨ ({{ID}} — {{CATEGORY}})
+        const DEFAULT_UNIVERSAL_CAPTION = `Can you read all 5 lines without pausing? 🎙️✨ ({{ID}} — {{CATEGORY}})
 
 {{HOOK}}
+
+{{LINES}}
 
 📌 Phonetic Coaching Tip ({{CATEGORY}}):
 {{TIP}}
 
-How to play:
+How to practice:
 1️⃣ Read it slowly first so your tongue hits every sound cleanly.
 2️⃣ Read it a second time at natural conversational speed.
-3️⃣ Send us a voice note in the DMs — don't kill the fun!
-4️⃣ Follow @TheSlowEnglish if you passed (or bookmark this Reel to practice tonight).
+3️⃣ Send us a voice note in the DMs or comment how many tries it took!
+4️⃣ Save this Reel & follow @TheSlowEnglish for daily vocal workouts.
 
-#TheSlowEnglish #EnglishPronunciation #TongueTwisterChallenge #SpeakClearEnglish #AccentTraining #EnglishFluency #Elocution #DailyEnglishPractice #SpokenEnglishTips #LearnEnglishReels`;
+#TheSlowEnglish #EnglishPronunciation #TongueTwister #SpeakEnglish #AccentTraining`;
 
         // 25 Complete Pre-Loaded Starter Tongue-Twister Scripts (#001 to #025) across the 8 Core Categories
         const STARTER_SCRIPTS = [
@@ -7940,7 +7945,12 @@ How to play:
             typeof storedCaption === "string" &&
             storedCaption.trim().length > 0
           ) {
-            universalCaption = storedCaption;
+            if (storedCaption.includes("#TongueTwisterChallenge") || storedCaption.includes("#LearnEnglishReels")) {
+              universalCaption = DEFAULT_UNIVERSAL_CAPTION;
+              safeSetStorage(STORAGE_KEY_CAPTION, universalCaption);
+            } else {
+              universalCaption = storedCaption;
+            }
           }
 
           ebookCompletedMap = safeGetStorage(STORAGE_KEY_EBOOK_CHECKS, {});
@@ -8930,11 +8940,13 @@ How to play:
         // Build Universal Instagram Caption for a specific script
         function buildInstagramCaption(item) {
           const meta = getCategoryMeta(item.category);
+          const lines = Array.isArray(item.lines) ? item.lines.join("\n") : "";
           return universalCaption
             .replace(/\{\{ID\}\}/g, `#${item.id}`)
             .replace(/\{\{CATEGORY\}\}/g, item.category)
             .replace(/\{\{TIP\}\}/g, meta.tip)
-            .replace(/\{\{HOOK\}\}/g, item.hook);
+            .replace(/\{\{HOOK\}\}/g, item.hook)
+            .replace(/\{\{LINES\}\}/g, lines);
         }
 
         // 2. Render Dashboard Script Cards
@@ -9576,8 +9588,29 @@ How to play:
                 .replace(/\{([^}]+)\}/g, "$1")
                 .replace(/_([^_]+)_/g, "$1");
               const hook = (document.getElementById("studioHookInput").value || "").replace(/\n/g, " ");
-              const caption = `${hook}\n\n${rawScript}\n\n📌 Follow @TheSlowEnglish for daily vocal workouts!`;
-              copyTextToClipboard(caption, "📋 Copied clean caption to clipboard!");
+              const category = (document.getElementById("studioCategoryInput") ? document.getElementById("studioCategoryInput").value : "Pronunciation");
+              const leftTip = (document.getElementById("studioLeftTipInput") ? document.getElementById("studioLeftTipInput").value : "");
+              const rightTip = (document.getElementById("studioRightTipInput") ? document.getElementById("studioRightTipInput").value : "");
+              const tip = leftTip && rightTip ? `${leftTip} | ${rightTip}` : (leftTip || rightTip || "Focus on tongue precision and clear vowel separation.");
+
+              const caption = `Can you read all 5 lines without pausing? 🎙️✨
+
+${hook}
+
+${rawScript}
+
+📌 Phonetic Tip (${category}):
+${tip}
+
+How to practice:
+1️⃣ Read slowly first — feel every sound cleanly.
+2️⃣ Read at natural conversational speed.
+3️⃣ Drop a voice note in our DMs or comment your score!
+4️⃣ Save this Reel & follow @TheSlowEnglish for daily vocal workouts.
+
+#TheSlowEnglish #EnglishPronunciation #TongueTwister #SpeakEnglish #AccentTraining`;
+
+              copyTextToClipboard(caption, "📋 Copied clean Reel caption with top 5 hashtags!");
             });
           }
 

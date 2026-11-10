@@ -905,7 +905,27 @@ Then try this without pausing:</div>
                 .replace(/_([^_]+)_/g, '$1');
 
             const hook = document.getElementById('hookInput').value.replace(/\n/g, ' ');
-            const caption = `${hook}\n\n${rawScript}\n\n📌 Follow @TheSlowEnglish for daily vocal workouts!`;
+            const category = document.getElementById('categoryInput') ? document.getElementById('categoryInput').value : 'Pronunciation';
+            const leftTip = document.getElementById('leftTipInput') ? document.getElementById('leftTipInput').value : '';
+            const rightTip = document.getElementById('rightTipInput') ? document.getElementById('rightTipInput').value : '';
+            const tip = leftTip && rightTip ? `${leftTip} | ${rightTip}` : (leftTip || rightTip || 'Focus on tongue precision and clear vowel separation.');
+
+            const caption = `Can you read all 5 lines without pausing? 🎙️✨
+
+${hook}
+
+${rawScript}
+
+📌 Phonetic Tip (${category}):
+${tip}
+
+How to practice:
+1️⃣ Read slowly first — feel every sound cleanly.
+2️⃣ Read at natural conversational speed.
+3️⃣ Drop a voice note in our DMs or comment your score!
+4️⃣ Save this Reel & follow @TheSlowEnglish for daily vocal workouts.
+
+#TheSlowEnglish #EnglishPronunciation #TongueTwister #SpeakEnglish #AccentTraining`;
 
             const temp = document.createElement('textarea');
             temp.value = caption;
@@ -914,7 +934,7 @@ Then try this without pausing:</div>
             document.execCommand('copy');
             document.body.removeChild(temp);
 
-            showToast('📋 Copied clean script & caption to clipboard!');
+            showToast('📋 Copied Reel caption with top 5 hashtags!');
         }
 
         let toastTimeout;
