@@ -795,6 +795,22 @@ Then try this without pausing:</div>
                         const s = clonedDoc.createElement('style');
                         s.innerHTML = 'img { display: inline !important; }';
                         clonedDoc.head.appendChild(s);
+
+                        const clonedMaster = clonedDoc.getElementById('reelCardMaster');
+                        if (clonedMaster) {
+                            clonedDoc.body.innerHTML = '';
+                            clonedDoc.body.style.margin = '0';
+                            clonedDoc.body.style.padding = '0';
+                            clonedDoc.body.style.width = '1080px';
+                            clonedDoc.body.style.height = '1920px';
+                            clonedDoc.body.style.backgroundColor = '#F5EFE6';
+                            clonedDoc.body.style.overflow = 'hidden';
+                            clonedMaster.style.transform = 'none';
+                            clonedMaster.style.position = 'static';
+                            clonedMaster.style.width = '1080px';
+                            clonedMaster.style.height = '1920px';
+                            clonedDoc.body.appendChild(clonedMaster);
+                        }
                     }
                 });
 
