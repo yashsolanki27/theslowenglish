@@ -1063,122 +1063,137 @@
           <!-- ACTUAL 1080x1920 MASTER DOM CARD (Scaled via CSS transform for preview, captured 1:1 on export) -->
           <div
             id="reelCardMaster"
-            style="width: 1080px; height: 1920px; background-color: #F5EFE6; position: absolute; top: 0; left: 0; transform-origin: top left; overflow: hidden; font-family: 'Inter', sans-serif; padding: 44px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;"
+            style="width: 1080px; height: 1920px; background-color: #F5EFE6; position: absolute; top: 0; left: 0; transform-origin: top left; overflow: hidden; font-family: 'Inter', sans-serif; box-sizing: border-box;"
           >
             <!-- Architectural Background Lines -->
             <div
               style="position: absolute; top: 0; bottom: 0; left: 540px; width: 1.5px; background-color: #DFD7C8; pointer-events: none;"
             ></div>
             <div
-              style="position: absolute; top: 0; bottom: 0; left: 44px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"
+              style="position: absolute; top: 0; bottom: 0; left: 50px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"
             ></div>
             <div
-              style="position: absolute; top: 0; bottom: 0; right: 44px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"
+              style="position: absolute; top: 0; bottom: 0; right: 50px; width: 1.5px; background-color: #E7E0D2; pointer-events: none;"
             ></div>
 
-            <!-- 1. TOP BLACK HEADER BAR -->
+            <!-- UNIFIED EDITORIAL MASTER FRAME (Top: 230px, Height: 1140px, Ends y=1370px, leaving 550px Safe Zone for Instagram UI) -->
             <div
-              style="width: 100%; height: 114px; background-color: #18120E; border-radius: 22px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; position: relative; z-index: 10; box-sizing: border-box;"
+              style="position: absolute; top: 230px; height: 1140px; left: 60px; right: 60px; background-color: #FAF6F0; border: 3px solid #18120E; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; z-index: 10; box-shadow: 0 24px 50px rgba(0,0,0,0.12); box-sizing: border-box;"
             >
-              <!-- Left White Pill: DAILY VOCAL WORKOUT -->
+              <!-- 1. TOP INTEGRATED HEADER BAR WITH LOGO -->
               <div
-                id="domWorkoutBadge"
-                style="background-color: #F9F6F0; color: #18120E; font-weight: 800; font-size: 21px; letter-spacing: 0.03em; padding: 0 32px; height: 58px; border-radius: 999px; display: flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1; box-sizing: border-box;"
+                style="width: 100%; height: 98px; background-color: #18120E; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; box-sizing: border-box;"
               >
-                DAILY VOCAL WORKOUT
+                <!-- Logo & Brand Badge -->
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <!-- SE Emblem Badge -->
+                  <div
+                    style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #C84326 0%, #A8331A 100%); border: 2px solid #DCA03A; color: #FAF6F0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 700; font-size: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.4); flex-shrink: 0;"
+                  >
+                    SE
+                  </div>
+                  <div>
+                    <div
+                      style="color: #FAF6F0; font-weight: 800; font-size: 22px; line-height: 1.1; letter-spacing: -0.01em;"
+                    >
+                      The Slow English
+                    </div>
+                    <div
+                      style="color: #DCA03A; font-size: 13.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;"
+                    >
+                      @theslowenglish
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Category & Workout Pill -->
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span
+                    id="domWorkoutBadge"
+                    style="background-color: #FAF6F0; color: #18120E; font-weight: 800; font-size: 16px; letter-spacing: 0.03em; padding: 6px 18px; border-radius: 999px; white-space: nowrap;"
+                  >
+                    DAILY VOCAL WORKOUT
+                  </span>
+                  <span
+                    id="domCategoryBadge"
+                    style="color: #DCA03A; font-weight: 700; font-size: 16px; letter-spacing: 0.02em; white-space: nowrap;"
+                  >
+                    CATEGORY 01 • S vs. SH
+                  </span>
+                </div>
               </div>
 
-              <!-- Right Outlined Pill: CATEGORY 01 • S vs. SH -->
+              <!-- 2. TERRACOTTA HOOK STRIP -->
               <div
-                id="domCategoryBadge"
-                style="border: 1.5px solid rgba(255, 255, 255, 0.32); color: #ECE7DF; font-weight: 600; font-size: 20px; letter-spacing: 0.03em; padding: 0 28px; height: 58px; border-radius: 999px; display: flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1; box-sizing: border-box;"
+                style="width: 100%; background-color: #C84326; padding: 26px 40px; border-bottom: 2.5px solid #18120E; box-sizing: border-box;"
               >
-                CATEGORY 01 • S vs. SH
-              </div>
-            </div>
-
-            <!-- 2. RED HOOK BOX -->
-            <div
-              style="width: 100%; min-height: 224px; background-color: #C84326; border: 2.5px solid #2B1B12; border-radius: 24px; padding: 38px 48px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 10; box-sizing: border-box;"
-            >
-              <div
-                id="domHookText"
-                style="color: #FAF6F0; font-weight: 800; font-size: 51px; line-height: 1.27; letter-spacing: -0.015em; white-space: pre-line;"
-              >
-                Do you speak English fluently?
+                <div
+                  id="domHookText"
+                  style="color: #FAF6F0; font-weight: 800; font-size: 43px; line-height: 1.25; letter-spacing: -0.015em; white-space: pre-line;"
+                >
+                  Do you speak English fluently?
 Then try this without pausing:
+                </div>
+              </div>
+
+              <!-- 3. MAIN 5-LINE TWISTER BODY -->
+              <div
+                style="flex: 1; padding: 38px 46px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;"
+              >
+                <div
+                  id="domScriptLines"
+                  style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; width: 100%; max-width: 860px; margin: 0 auto; box-sizing: border-box;"
+                >
+                  <!-- Populated dynamically with interactive words -->
+                </div>
+              </div>
+
+              <!-- 4. BOTTOM INTEGRATED SOUND PLACEMENT BAR -->
+              <div
+                style="border-top: 2.5px solid #18120E; background-color: #EFE9DC; display: flex; flex-direction: row; height: 150px; box-sizing: border-box;"
+              >
+                <!-- Left Column -->
+                <div
+                  style="width: 50%; padding: 18px 24px; border-right: 2.5px solid #18120E; display: flex; align-items: center; gap: 16px; box-sizing: border-box;"
+                >
+                  <div
+                    id="domLeftBadge"
+                    style="width: 62px; height: 62px; border-radius: 12px; background-color: #DCA03A; color: #14110F; font-weight: 800; font-size: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                  >
+                    S
+                  </div>
+                  <div
+                    id="domLeftTip"
+                    style="color: #14110F; font-weight: 600; font-size: 24px; line-height: 1.25;"
+                  >
+                    Smiling lips, tongue behind teeth.
+                  </div>
+                </div>
+
+                <!-- Right Column -->
+                <div
+                  style="width: 50%; padding: 18px 24px; display: flex; align-items: center; gap: 16px; box-sizing: border-box;"
+                >
+                  <div
+                    id="domRightBadge"
+                    style="width: 62px; height: 62px; border-radius: 12px; background-color: #C84326; color: #FAF6F0; font-weight: 800; font-size: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                  >
+                    SH
+                  </div>
+                  <div
+                    id="domRightTip"
+                    style="color: #14110F; font-weight: 600; font-size: 24px; line-height: 1.25;"
+                  >
+                    Rounded lips, blade pulled back.
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- 3. MAIN TONGUE-TWISTER CARD -->
-            <div
-              style="width: 100%; height: 840px; background-color: #F8F4EC; border: 2.5px solid #2B1B12; border-radius: 26px; padding: 56px 64px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 10; box-sizing: border-box;"
-            >
-              <div
-                id="domScriptLines"
-                style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; width: 100%; max-width: 860px; padding: 6px 0; box-sizing: border-box;"
-              >
-                <!-- Populated dynamically with interactive words -->
-              </div>
-            </div>
-
-            <!-- 4. TWO-COLUMN PHONETIC GUIDE BOX -->
-            <div
-              style="width: 100%; min-height: 206px; background-color: #EFE9DC; border: 2.5px solid #2B1B12; border-radius: 22px; display: flex; flex-direction: row; overflow: hidden; position: relative; z-index: 10; box-sizing: border-box;"
-            >
-              <!-- Left Column: Gold Badge + Tip -->
-              <div
-                style="width: 50%; padding: 30px 34px; border-right: 2.5px solid #2B1B12; display: flex; align-items: center; gap: 24px; box-sizing: border-box;"
-              >
-                <div
-                  id="domLeftBadge"
-                  style="width: 82px; height: 82px; border-radius: 18px; background-color: #DCA03A; color: #14110F; font-weight: 800; font-size: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; text-align: center; box-sizing: border-box;"
-                >
-                  S
-                </div>
-                <div
-                  id="domLeftTip"
-                  style="color: #14110F; font-weight: 600; font-size: 31px; line-height: 1.26; letter-spacing: -0.01em;"
-                >
-                  Smiling lips, tongue tip behind upper teeth.
-                </div>
-              </div>
-
-              <!-- Right Column: Terracotta Badge + Tip -->
-              <div
-                style="width: 50%; padding: 30px 34px; display: flex; align-items: center; gap: 24px; box-sizing: border-box;"
-              >
-                <div
-                  id="domRightBadge"
-                  style="width: 82px; height: 82px; border-radius: 18px; background-color: #C84326; color: #FAF6F0; font-weight: 800; font-size: 38px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; text-align: center; box-sizing: border-box;"
-                >
-                  SH
-                </div>
-                <div
-                  id="domRightTip"
-                  style="color: #14110F; font-weight: 600; font-size: 31px; line-height: 1.26; letter-spacing: -0.01em;"
-                >
-                  Rounded lips, pull tongue blade slightly back.
-                </div>
-              </div>
-            </div>
-
-            <!-- 5. BOTTOM FOOTER PILL BAR -->
-            <div
-              style="width: 100%; height: 140px; background-color: #18120E; border-radius: 999px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 40px; position: relative; z-index: 10; box-sizing: border-box;"
-            >
-              <div
-                id="domFooterLine1"
-                style="color: #DCA03A; font-weight: 700; font-size: 34px; line-height: 1.15; letter-spacing: -0.01em;"
-              >
-                🎙️ Send a voice note, don't kill the fun.
-              </div>
-              <div
-                id="domFooterLine2"
-                style="color: #FFFFFF; font-weight: 800; font-size: 37px; line-height: 1.15; letter-spacing: -0.01em;"
-              >
-                Follow @TheSlowEnglish
-              </div>
+            <!-- Invisible preservation of footer line targets for backward compatibility -->
+            <div style="display: none;">
+              <span id="domFooterLine1"></span>
+              <span id="domFooterLine2"></span>
             </div>
           </div>
         </div>
@@ -8168,8 +8183,8 @@ How to play:
           domRightBadge.textContent = rightBadgeInput ? rightBadgeInput.value : "SH";
           domRightTip.textContent = rightTipInput ? rightTipInput.value : "";
 
-          domFooterLine1.textContent = footerLine1Input ? footerLine1Input.value : "🎙️ Send a voice note, don't kill the fun.";
-          domFooterLine2.textContent = footerLine2Input ? footerLine2Input.value : "Follow @TheSlowEnglish";
+          if (domFooterLine1) domFooterLine1.textContent = footerLine1Input ? footerLine1Input.value : "🎙️ Send a voice note, don't kill the fun.";
+          if (domFooterLine2) domFooterLine2.textContent = footerLine2Input ? footerLine2Input.value : "Follow @TheSlowEnglish";
 
           scriptContainer.innerHTML = "";
           if (hideScript) return;
